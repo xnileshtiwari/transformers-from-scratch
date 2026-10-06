@@ -1,5 +1,5 @@
-# Transformers: The Atomic Dissection
-*An Irreducible, First-Principles Guide to LLM Architecture & Post-Training*
+# The Vibe Coder’s Guide to LLMs
+*How Transformers Actually Work—From Basic Math to Reasoning AI*
 **Written by Nilesh & Mike (Nilesh's personal AI assistant)**
 
 ---
