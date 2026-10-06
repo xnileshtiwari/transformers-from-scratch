@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1600px;
+    height: 2560px;
+    overflow: hidden;
+    position: relative;
+    background: #030712;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #ffffff;
+  }
+
+  .bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Deep atmospheric gradients at top and bottom so text is ultra-crisp */
+  .gradient-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      rgba(3, 7, 18, 0.95) 0%,
+      rgba(3, 7, 18, 0.88) 22%,
+      rgba(3, 7, 18, 0.4) 38%,
+      transparent 50%,
+      rgba(3, 7, 18, 0.5) 75%,
+      rgba(3, 7, 18, 0.95) 92%,
+      #030712 100%
+    );
+  }
+
+  .content {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 160px 140px;
+  }
+
+  .top-section {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .kicker-pill {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.92);
+    border: 1.5px solid rgba(236, 72, 153, 0.6);
+    padding: 18px 36px;
+    border-radius: 9999px;
+    width: fit-content;
+    box-shadow: 0 0 35px rgba(236, 72, 153, 0.3);
+  }
+
+  .kicker-pill span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #f472b6;
+  }
+
+  h1.title {
+    font-size: 118px;
+    line-height: 1.02;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: #ffffff;
+    margin-top: 10px;
+    text-shadow: 0 6px 40px rgba(0, 0, 0, 0.95);
+  }
+
+  h1.title .highlight {
+    background: linear-gradient(135deg, #38bdf8 0%, #ec4899 50%, #facc15 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    font-size: 38px;
+    line-height: 1.45;
+    font-weight: 600;
+    color: #f1f5f9;
+    max-width: 1300px;
+    border-left: 5px solid #ec4899;
+    padding-left: 32px;
+    text-shadow: 0 3px 20px rgba(0, 0, 0, 0.9);
+  }
+
+  .bottom-badge-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.2);
+    padding-top: 40px;
+    backdrop-filter: blur(10px);
+  }
+
+  .edition-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #ffffff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  }
+</style>
+</head>
+<body>
+  <img class="bg-image" src="/home/nilesh/.openclaw/workspace/anime_bg.jpg" alt="Anime Vibe Coder Background">
+  <div class="gradient-overlay"></div>
+  <div class="content">
+    <div class="top-section">
+      <div class="kicker-pill">
+        <span>An Irreducible First Principles Manual</span>
+      </div>
+      <h1 class="title">The Vibe Coder’s<br>Guide to <span class="highlight">LLMs</span></h1>
+      <p class="subtitle">How Transformers Actually Work: From Basic High School Math to Scaled Self-Attention and Reasoning AIs.</p>
+    </div>
+
+    <div><!-- Middle spacing so the vibrant anime coder illustration shines --></div>
+
+    <div class="bottom-badge-row">
+      <span class="edition-tag">2026 EDITION</span>
+    </div>
+  </div>
+</body>
+</html>
