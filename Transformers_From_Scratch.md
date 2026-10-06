@@ -89,29 +89,7 @@ where $\mathbf{u}_{s_k}$ denotes the ideal latent subspace representation of sen
 
 The Transformer architecture solves this architectural bottleneck by decoupling the **token identity** from the **contextual token state**. While the network begins with a static lookup coordinate, successive Self-Attention layers calculate affinity scores across all surrounding tokens, dynamically shifting the vector along semantic trajectories.
 
-```
-+-------------------------------------------------------------------------------+
-|                        STATIC EMBEDDING COLLAPSE (Word2Vec)                   |
-|                                                                               |
-|   Sense A: Financial Institution ("bank") ───\                               |
-|                                               +──► [ e_bank in R^d ]          |
-|   Sense B: River Embankment ("bank")      ───/     (Single averaged centroid) |
-|                                                                               |
-|   "He deposited money in the bank"   ───► e_bank (No contextual distinction)   |
-|   "The river overflowed the bank"    ───► e_bank (No contextual distinction)   |
-+-------------------------------------------------------------------------------+
-                                        │
-                                        ▼
-+-------------------------------------------------------------------------------+
-|                   TRANSFORMER DYNAMIC CONTEXTUAL TRAJECTORY                   |
-|                                                                               |
-|   [Context: "deposited", "money"] ──► Self-Attention ──► Shifts toward        |
-|                                                          Finance Subspace     |
-|                                                                               |
-|   [Context: "river", "overflowed"] ─► Self-Attention ──► Shifts toward        |
-|                                                          Hydrology Subspace   |
-+-------------------------------------------------------------------------------+
-```
+![Figure 0.1: Static Word2Vec Context Collapse vs Dynamic Contextual Trajectory](assets/diagram_0_polysemy.jpg)
 
 #### 📐 The Mathematics & Working
 In Word2Vec, the lookup function $\mathbf{e}_{\text{static}}: \mathcal{V} \to \mathbb{R}^d$ satisfies:
@@ -163,31 +141,7 @@ As conceptualized by Elhage et al. (2021) in *A Mathematical Framework for Trans
 $$\mathbf{x}_i^{(\ell)} = \mathbf{x}_i^{(\ell-1)} + \Delta \mathbf{x}_{i, \text{attn}}^{(\ell)} + \Delta \mathbf{x}_{i, \text{mlp}}^{(\ell)}$$
 Layers communicate by reading from the stream via projection matrices and writing updates back via additive vector accumulation.
 
-```
-Token ID: 4125 ("quantum")
-        │
-        ▼ (One-hot indicator vector)
-[ 0, 0, ..., 1 (index 4125), ..., 0 ]  x  [ W_E (V x d_model) ]
-                                          │
-                                          ▼ (Direct Row Indexing)
-              [ -0.042, 0.819, 0.120, ..., 0.541 ] in R^{d_model}
-                                          │
-                                          ▼  x sqrt(d_model) + Positional Signal
-============================= RESIDUAL STREAM =============================
- Layer 0 State:  x_i^(0) ────────────────────────────────────────────────►
-                            │                               ▲
-                         (Read)                          (Write)
-                            ▼                               │
-                     [ Multi-Head Attention ] ──► Delta x_attn^(1)
-                            │                               ▲
-                         (Read)                          (Write)
-                            ▼                               │
-                     [ Feed-Forward MLP ]    ──► Delta x_mlp^(1)
-                            │                               ▲
-                            ▼                               │
- Layer 1 State:  x_i^(1) = x_i^(0) + Delta x_attn^(1) + Delta x_mlp^(1) ──►
-===========================================================================
-```
+![Figure 0.2: Token Embedding Matrix Lookup and Residual Stream Projection](assets/diagram_0_2_embedding.jpg)
 
 #### 📐 The Mathematics & Working
 The embedding lookup and initial residual stream injection are defined by:
@@ -247,39 +201,7 @@ $$\text{Attn}(\widetilde{X}) = \widetilde{A} \widetilde{V} = (\mathbf{P} A \math
 
 This mathematical equality proves that self-attention is strictly **permutation equivariant**: permuting the input sequence merely permutes the corresponding rows of the output matrix without altering any interaction score. If the output rows are pooled or compared independently of row order, the operation is **permutation invariant**. Without an injected positional signal, the network cannot distinguish where a word appears in time or space.
 
-```
-+-------------------------------------------------------------------------------+
-|                       RECURRENT (RNN) SEQUENTIAL BIAS                         |
-|                                                                               |
-|   x_1 ("Dog") ──► [Cell 1] ──h_1──► [Cell 2] ──h_2──► [Cell 3]                |
-|                                        ▲                 ▲                    |
-|   x_2 ("bites") ───────────────────────┘                 │                    |
-|   x_3 ("man")   ─────────────────────────────────────────┘                    |
-|   --> Architectural time-arrow enforces order intrinsically.                  |
-+-------------------------------------------------------------------------------+
-
-+-------------------------------------------------------------------------------+
-|                     TRANSFORMER PARALLEL SET OPERATION                        |
-|                                                                               |
-|   X = [ x_dog; x_bites; x_man ]                                               |
-|                                                                               |
-|         Q = X W_Q           K = X W_K                   V = X W_V             |
-|             │                   │                           │                 |
-|             └─────────► [ Q K^T / sqrt(d_k) ] ◄─────────────┘                 |
-|                                 │                                             |
-|                                 ▼                                             |
-|                             [Softmax]                                         |
-|                                 │                                             |
-|                                 ▼                                             |
-|                           Attention Matrix A                                  |
-|                                 │                                             |
-|                                 ▼                                             |
-|                               A x V                                           |
-|                                                                               |
-|   Permute rows of X ──► Rows of A x V permute identically.                    |
-|   --> Zero knowledge of whether "dog" was token #1 or token #3!               |
-+-------------------------------------------------------------------------------+
-```
+![Figure 1.1: Recurrent Sequential Processing vs Transformer Permutation Invariance](assets/diagram_1_1_permutation.jpg)
 
 #### 📐 The Mathematics & Working
 The permutation equivariance condition for self-attention is formally stated as:
@@ -337,24 +259,7 @@ In matrix form, the 2D subspace corresponding to frequency channel $i$ undergoes
 $$\begin{bmatrix} PE_{(pos+k, 2i)} \\ PE_{(pos+k, 2i+1)} \end{bmatrix} = \begin{bmatrix} \cos(\omega_i k) & \sin(\omega_i k) \\ -\sin(\omega_i k) & \cos(\omega_i k) \end{bmatrix} \begin{bmatrix} PE_{(pos, 2i)} \\ PE_{(pos, 2i+1)} \end{bmatrix}$$
 This guarantees that the self-attention mechanism can learn to attend by relative position using simple bilinear projections.
 
-```
-Dimension Index (2i, 2i+1)
-      │
-Low   │  i=0 (High freq, lambda = 6 tokens)   ~~/\~~/\~~/\~~/\~~/\~~/\~~
-Index │  i=1                                  ~~~/\~~~~/\~~~~/\~~~~/\~~~
-      │  i=2                                  ~~~~~/\~~~~~~~~/\~~~~~~~~~
-High  │  ...                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Index ▼  i=d/2-1 (Low freq, lambda = 62,831)  \________________________/
-      ──────────────────────────────────────────────────────────────────►
-      Position pos: 0      1      2      3      4      ...      N
-
-      Token Embedding e_pos  : [  0.42, -0.19,  0.88, ...,  0.15 ]
-                                            + (Element-wise Addition)
-      Sinusoidal Vector PE_pos: [  0.00,  1.00,  0.84, ...,  0.01 ]
-                                            │
-                                            ▼
-      Residual Stream x_pos^(0): [  0.42,  0.81,  1.72, ...,  0.16 ]
-```
+![Figure 1.2: Frequency Spectrum of Sinusoidal Positional Encoding](assets/diagram_1_2_sinusoidal.jpg)
 
 #### 📐 The Mathematics & Working
 The absolute sinusoidal positional encoding vector $PE_{pos} \in \mathbb{R}^{d_{\text{model}}}$ is defined element-wise by:
@@ -414,43 +319,7 @@ Thus:
 $$\langle \mathbf{R}_{\Theta, m}^d \mathbf{q}_m, \mathbf{R}_{\Theta, n}^d \mathbf{k}_n \rangle = \mathbf{q}_m^\top \mathbf{R}_{\Theta, n - m}^d \mathbf{k}_n$$
 The dot product depends purely on the relative distance $n - m$. Furthermore, RoPE is applied **only** to Query and Key projections; Value vectors ($\mathbf{v}$) and the residual stream remain completely untouched.
 
-```
-       Query vector at pos m                       Key vector at pos n
-        q_m = [ q_0, q_1 ]                          k_n = [ k_0, k_1 ]
-                │                                           │
-                ▼                                           ▼
-         Rotate by m * theta                         Rotate by n * theta
-                │                                           │
-                ▼                                           ▼
-        R_{theta, m} q_m                            R_{theta, n} k_n
-                \                                           /
-                 \                                         /
-                  ▼                                       ▼
-        Inner Product: < R_{theta, m} q_m,  R_{theta, n} k_n >
-                                      │
-                                      ▼
-                      Angle difference = (m - n) * theta!
-          --> Absolute positions m and n cancel out completely.
-          --> Only relative displacement (m - n) determines attention.
-
-+-------------------------------------------------------------------------------+
-|                       2D SUBSPACE ROTATION GEOMETRY                           |
-|                                                                               |
-|                             ^ Im                                              |
-|                             │      R_{theta, m} q                             |
-|                             │         /                                       |
-|                             │        /  Angle = m * theta                     |
-|                             │       /                                         |
-|                             │      /  ) relative angle = (m - n) * theta      |
-|                             │     /                                           |
-|                             │    /                                            |
-|                             │   /------ R_{theta, n} k                        |
-|                             │  /       / Angle = n * theta                    |
-|                             └─/───────/──────────────► Re                     |
-|                                                                               |
-|   Preserves vector norm: ||R q||_2 = ||q||_2  (Orthogonal isometry!)          |
-+-------------------------------------------------------------------------------+
-```
+![Figure 1.3: Rotary Position Embedding 2D Complex Subspace Rotation](assets/diagram_1_rope.jpg)
 
 #### 📐 The Mathematics & Working
 The rotary transformation applied to query vector $\mathbf{q}_m \in \mathbb{R}^{d_k}$ and key vector $\mathbf{k}_n \in \mathbb{R}^{d_k}$ is:
@@ -507,17 +376,7 @@ Vaswani et al. (2017) formalized attention as mapping a query and a set of key-v
 2. **Key Matrix ($W_K$)**: Projects $X$ into keys $K$, representing the addressable semantic catalog of each token position.
 3. **Value Matrix ($W_V$)**: Projects $X$ into values $V$, containing the substantive semantic payload extracted if a key is successfully matched.
 
-```
-       Input Token Representations X  [N x d_model]
-             |-------------------|-------------------|
-             |                   |                   |
-             v                   v                   v
-     [Linear: W_Q]       [Linear: W_K]       [Linear: W_V]
-             |                   |                   |
-             v                   v                   v
-        Queries Q             Keys K              Values V
-       [N x d_k]           [N x d_k]           [N x d_v]
-```
+![Figure 2.1: Query, Key, and Value Linear Projections](assets/diagram_2_1_projections.jpg)
 
 ```xml
 <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
@@ -598,17 +457,7 @@ When batched over the entire sequence of length $N$:
 - $K^T$ has dimensions $d_k \times N$.
 - The resulting matrix $S = Q K^T$ has dimensions $N \times N$, where entry $(i, j)$ represents the raw score of how strongly token $i$ attends to token $j$.
 
-```
-     Queries Q [N x d_k]           Keys Transposed K^T [d_k x N]
-      [  q_1  ]                      [  |     |         |    ]
-      [  q_2  ]          x           [ k_1   k_2  ...  k_N   ]
-      [  ...  ]                      [  |     |         |    ]
-      [  q_N  ]
-                         ||
-                         \/
-              Affinity Matrix S = Q K^T [N x N]
-              Row i, Column j: s_{i,j} = q_i · k_j
-```
+![Figure 2.2: Raw Compatibility Scoring Matrix Multiplication](assets/diagram_2_2_dot_product.jpg)
 
 #### 📐 The Mathematics & Working
 The raw compatibility scoring operation is defined as:
@@ -653,17 +502,7 @@ Assuming the components of $q \in \mathbb{R}^{d_k}$ and $k \in \mathbb{R}^{d_k}$
 
 Scaling by $\tau = \frac{1}{\sqrt{d_k}}$ renormalizes the variance: $\text{Var}\left(\frac{q \cdot k}{\sqrt{d_k}}\right) = \frac{1}{d_k} \text{Var}(q \cdot k) = \frac{d_k}{d_k} = 1.0$.
 
-```
- Unscaled Dot Products (d_k = 128)          Scaled Dot Products
- Variance = d_k = 128                       Variance = 1.0
- Std Dev ≈ 11.31                            Std Dev = 1.0
-   Logits spread: [-35, +35]                  Logits spread: [-3.0, +3.0]
-              |                                          |
-              v                                          v
-      Softmax Saturation!                        Healthy Softmax!
-      One-hot hard routing.                      Smooth distributions.
-      Gradients vanish (~0).                     Robust gradient flow.
-```
+![Figure 2.3: Variance Scaling Factor 1/sqrt(d_k) and Gradient Active Region](assets/diagram_2_3_scaling.jpg)
 
 #### 📐 The Mathematics & Working
 The scaled logit matrix $S$ is expressed as:
@@ -709,17 +548,7 @@ $$m_i = \max_j (s_{i,j}), \quad \text{softmax}(s_i)_j = \frac{\exp(s_{i,j} - m_i
 
 This guarantees that the maximum exponent is $\exp(0) = 1$, preventing IEEE 754 float16/bfloat16 overflow while preserving exact probability ratios.
 
-```
- Scaled Logits Row i:    [  1.2,   3.8,  -0.5,   2.1  ]
-                                    |
-                        Subtract Max (3.8) & Exp
-                                    |
- Exponentiated:          [ 0.074, 1.000, 0.014, 0.183 ]  --> Sum = 1.271
-                                    |
-                            Divide by Sum
-                                    |
- Attention Weights A:    [ 0.058, 0.787, 0.011, 0.144 ]  --> Sum = 1.000 (Simplex)
-```
+![Figure 2.4: Softmax Row-wise Probability Normalization](assets/diagram_2_4_softmax.jpg)
 
 #### 📐 The Mathematics & Working
 The attention weight matrix $A \in \mathbb{R}^{N \times N}$ is formulated as:
@@ -765,15 +594,7 @@ For any given token $i$, its output vector $z_i$ is a barycentric point (convex 
 
 If token $i$ attends $90\%$ to token $j$ and $10\%$ to token $k$, the resulting representation $z_i$ is composed of $0.90 v_j + 0.10 v_k$. This contextual representation is subsequently passed to the multi-head projection or residual add-and-norm pipeline.
 
-```
- Attention Weights A [N x N]           Values V [N x d_v]       Output Z [N x d_v]
- [ A_{1,1} A_{1,2} ... A_{1,N} ]       [ --- v_1 --- ]          [ --- z_1 --- ]
- [ A_{2,1} A_{2,2} ... A_{2,N} ]   x   [ --- v_2 --- ]    =     [ --- z_2 --- ]
- [   ...     ...   ...   ...   ]       [     ...     ]          [     ...     ]
- [ A_{N,1} A_{N,2} ... A_{N,N} ]       [ --- v_N --- ]          [ --- z_N --- ]
-
-                 z_i = sum_{j=1}^N ( A_{i,j} * v_j )
-```
+![Figure 2.5: Weighted Value Aggregation and Output Representation](assets/diagram_2_5_value_aggregation.jpg)
 
 #### 📐 The Mathematics & Working
 The weighted aggregation is computed by matrix multiplication:
@@ -820,27 +641,7 @@ $$\text{head}_i = \text{Attention}(Q W_i^Q, K W_i^K, V W_i^V)$$
 
 Where each head operates on vectors of reduced dimension $d_k = d_v = d_{\text{model}} / h$. This ensures that the total computational cost of multi-head attention is identical to single-head attention with full dimensionality $d_{\text{model}}$, while multiplying the model's expressive representational bandwidth by $h$.
 
-```
-                        Input Representation X [N x d_model]
-                                          |
-        +---------------------------------+---------------------------------+
-        |                                 |                                 |
-        v                                 v                                 v
-   [Head 1 Projections]              [Head 2 Projections]             [Head h Projections]
-  W_1^Q, W_1^K, W_1^V               W_2^Q, W_2^K, W_2^V               W_h^Q, W_h^K, W_h^V
-        |                                 |                                 |
-        v                                 v                                 v
-   Attention(Q_1, K_1, V_1)          Attention(Q_2, K_2, V_2)          Attention(Q_h, K_h, V_h)
-     [N x (d_model/h)]                 [N x (d_model/h)]                 [N x (d_model/h)]
-        |                                 |                                 |
-        +---------------------------------+---------------------------------+
-                                          |
-                                          v
-                         Concatenation [N x d_model]
-                                          |
-                                          v
-                              Output Projection W^O
-```
+![Figure 3.1: Multi-Head Attention Subspace Splitting](assets/diagram_3_1_multihead.jpg)
 
 #### 📐 The Mathematics & Working
 The multi-head attention splitting is formalized as:
@@ -889,22 +690,7 @@ $$Z_{\text{out}} = H_{\text{concat}} W^O$$
 
 This operation can be interpreted as a set of linear combinations that blend features discovered in Head $A$ with features discovered in Head $B$, producing a unified, coherent update vector suitable for addition to the residual stream.
 
-```
- Head 1: [N x d_v]   Head 2: [N x d_v]  ...  Head h: [N x d_v]
-        \                 |                 /
-         \                |                /
-          v               v               v
-   Concatenated Matrix H_concat: [N x (h * d_v)] = [N x d_model]
-                                  |
-                                  v
-                   Projection Matrix W^O [d_model x d_model]
-                                  |
-                                  v
-                   Final MHA Output: [N x d_model]
-                                  |
-                                  v
-                    Add to Residual Connection: X + Z_out
-```
+![Figure 3.2: Multi-Head Concatenation and Output Projection W_O](assets/diagram_3_2_output_proj.jpg)
 
 #### 📐 The Mathematics & Working
 The output linear projection is expressed as:
@@ -950,20 +736,7 @@ $$\exp(-\infty) = 0$$
 
 Consequently, token $i$ assigns zero probability mass to any token at index $j > i$.
 
-```
-     Raw Scaled Logits S                  Causal Mask M                 Masked Logits (S + M)
-   [ s_{1,1} s_{1,2} s_{1,3} ]        [   0   -inf  -inf ]         [ s_{1,1}  -inf   -inf  ]
-   [ s_{2,1} s_{2,2} s_{2,3} ]   +    [   0     0   -inf ]    =    [ s_{2,1}  s_{2,2} -inf ]
-   [ s_{3,1} s_{3,2} s_{3,3} ]        [   0     0     0  ]         [ s_{3,1}  s_{3,2} s_{3,3}]
-                                                                               |
-                                                                         Softmax(S + M)
-                                                                               |
-                                                                               v
-                                                                   Lower-Triangular Weights A
-                                                                   [ 1.0     0.0     0.0   ]
-                                                                   [ a_{2,1} a_{2,2} 0.0   ]
-                                                                   [ a_{3,1} a_{3,2} a_{3,3}]
-```
+![Figure 3.3: Causal Attention Masking Matrix Arithmetic](assets/diagram_3_kv_cache.jpg)
 
 ```xml
 <svg viewBox="0 0 620 220" xmlns="http://www.w3.org/2000/svg">
@@ -1108,31 +881,7 @@ At step $t$:
 4. It computes the attention vector for the current token:
    $$z_t = \text{softmax}\left(\frac{q_t K_{\le t}^T}{\sqrt{d_k}}\right) V_{\le t} \in \mathbb{R}^{1 \times d_v}$$
 
-```
-================ NAIVE INFERENCE (No Cache) ===============
- Step t:
-  Pass tokens [x_1, x_2, ..., x_t] through full network
-  Compute Q, K, V for ALL t tokens  --> O(t * d_model^2) FLOPs!
-  Discard everything, repeat for step t+1.
-
-================ OPTIMIZED INFERENCE (KV-Cache) ============
- GPU HBM:
-  Cached Keys:   K_{<t} = [ k_1, k_2, ..., k_{t-1} ]  [ (t-1) x d_k ]
-  Cached Values: V_{<t} = [ v_1, v_2, ..., v_{t-1} ]  [ (t-1) x d_v ]
-
- Step t:
-  Input: ONLY token x_t [1 x d_model]
-  Compute: q_t = x_t W_Q,  k_t = x_t W_K,  v_t = x_t W_V  --> O(1 * d_model^2) FLOPs!
-  
-  Update Cache:
-   K_{<=t} = Concat( K_{<t}, k_t )
-   V_{<=t} = Concat( V_{<t}, v_t )
-  
-  Attention:
-   q_t [1 x d_k]  x  K_{<=t}^T [d_k x t]  -->  Attn Logits [1 x t]
-   Softmax( Logits / sqrt(d_k) )         -->  Attn Weights [1 x t]
-   Attn Weights [1 x t]  x  V_{<=t} [t x d_v] -->  Output z_t [1 x d_v]
-```
+![Figure 3.4: Autoregressive KV-Cache VRAM Dynamic Memory](assets/diagram_3_kv_cache.jpg)
 
 #### 📐 The Mathematics & Working
 At decode step $t$, the state update and attention calculation are defined as:
@@ -1187,22 +936,7 @@ $$\frac{\partial \mathcal{L}}{\partial \mathbf{x}_{\text{in}}} = \frac{\partial 
 
 Notice the identity term $\mathbf{I}$: even if the sublayer's gradient completely vanishes ($\frac{\partial \text{Sublayer}}{\partial \mathbf{x}_{\text{in}}} \approx 0$), the error gradient flows backwards completely unimpeded through the $+1$ identity path!
 
-```
-                    Residual Stream Highway
-             ───────────────────────────────────────► (+) ────────► Layer Output
-                                ▲                      │
-                                │                      │
-                        Identical Copy                 │
-                                │                      │
-             ───────────┬───────┘                      │
-                        │                              │
-                        ▼                              │
-                 [ Sub-Layer ]                         │
-                 (Attention or FFN)                    │
-                        │                              │
-                        ▼                              │
-                  Delta Vector Δx ─────────────────────┘
-```
+![Figure 4.1: Residual Stream Highway Architecture](assets/diagram_4_residual_norm.jpg)
 
 #### 📐 The Mathematics & Working
 $$\mathbf{x}^{(l)} = \mathbf{x}^{(l-1)} + f(\mathbf{x}^{(l-1)})$$
@@ -1235,10 +969,7 @@ Modern frontier models (LLaMA, Mistral, Gemma, Qwen) replace LayerNorm with **RM
 $$\text{RMSNorm}(\mathbf{x}) = \frac{\mathbf{x}}{\text{RMS}(\mathbf{x})} \odot \gamma, \quad \text{where } \text{RMS}(\mathbf{x}) = \sqrt{\frac{1}{d} \sum_{i=1}^d x_i^2 + \epsilon}$$
 By dropping mean calculation and the bias term $\beta$, RMSNorm reduces GPU memory reads/writes by ~10–50% per normalization layer with zero loss in training quality.
 
-```
-LayerNorm:  Vector x ──► [Subtract Mean μ] ──► [Divide by StdDev σ] ──► [Scale by γ + Shift by β]
-RMSNorm:    Vector x ────────────────────────► [Divide by RMS(x)]  ──► [Scale by γ]  (Faster! No bias!)
-```
+![Figure 4.2: Layer Normalization vs RMSNorm Architecture](assets/diagram_4_2_rmsnorm.jpg)
 
 #### 📐 The Mathematics & Working
 $$\bar{x}_i = \frac{x_i}{\sqrt{\frac{1}{d}\sum_{j=1}^d x_j^2 + \epsilon}} \cdot \gamma_i$$
@@ -1272,19 +1003,7 @@ The model calculates the average power across all coordinates of a single word's
   $$\mathbf{x}^{(l)} = \mathbf{x}^{(l-1)} + \text{Sublayer}(\text{Norm}(\mathbf{x}^{(l-1)}))$$
   Here, the residual highway passes through completely untouched ($\mathbf{x}^{(l-1)} + \dots$). Normalization only acts on the side branch right before entering Attention or FFN!
 
-```
-[Post-LN Architecture (2017)]
-x_in ──► [ + ] ──► [ LayerNorm ] ──────────────► x_out  (Norm sits directly ON highway; gradients degrade)
-          ▲
-          │
-      [Sublayer]
-
-[Pre-LN Architecture (Modern LLMs)]
-x_in ──────────────────────► [ + ] ────────────► x_out  (Highway is 100% UNTOUCHED! Perfect gradient flow)
-          │                   ▲
-          ▼                   │
-    [ LayerNorm ] ──► [ Sublayer ]
-```
+![Figure 4.3: Post-LN vs Pre-LN Architectural Flow](assets/diagram_4_3_pre_post_ln.jpg)
 
 #### 📐 The Mathematics & Working
 $$\mathbf{x}^{(l)} = \mathbf{x}^{(l-1)} + \text{FFN}(\text{RMSNorm}(\mathbf{x}^{(l-1)}))$$
@@ -1319,24 +1038,7 @@ $$\text{FFN}(\mathbf{x}) = \sigma(\mathbf{x} W_1 + \mathbf{b}_1) W_2 + \mathbf{b
 2. **The Non-Linear Activation ($\sigma$):** Introduces non-linearity (e.g. ReLU, GeLU, Swish), ensuring the model can represent complex non-linear functions rather than collapsing into a single matrix.
 3. **The Second Layer ($W_2 \in \mathbb{R}^{d_{ff} \times d_{model}}$):** Acts as the *Value generator*, projecting the activated memories back into the residual stream dimension, injecting concrete factual details into the token.
 
-```
-Residual Vector x (d_model = 4096)
-               │
-               ▼
-     [ Linear Expansion W_1 ]
-               │
-               ▼
-   Wider Hidden Layer (d_ff = 14336)  <── Fires on conceptual patterns (Key Detectors)
-               │
-               ▼
-      [ Activation Function σ ]
-               │
-               ▼
-     [ Linear Projection W_2 ]        <── Emits semantic payload (Value Generators)
-               │
-               ▼
-Output Vector (d_model = 4096) ──► Added to Residual Stream
-```
+![Figure 5.1: Two-Layer Feed-Forward Network (FFN) Expansion](assets/diagram_5_1_ffn_expansion.jpg)
 
 #### 📐 The Mathematics & Working
 $$\mathbf{y} = \sigma(\mathbf{x} W_{\text{gate}}) W_{\text{down}}$$
@@ -1372,17 +1074,7 @@ Notice how the architecture uses three weight matrices instead of two:
 
 To keep total parameter count identical to traditional $4\times$ FFNs, modern models set $d_{ff} \approx \frac{8}{3} d_{model}$ (e.g., in LLaMA-3 8B: $d_{model} = 4096$, $d_{ff} = 14336$).
 
-```
-Input x (d_model = 4096)
-       ├───► [ x W_gate ] ──► [ Swish Act ] ──┐
-       │                                       ▼
-       │                                     [ ⊙ ] Multiplicative Gate
-       │                                       ▲
-       └───► [ x W_up   ] ────────────────────┘
-                                               │
-                                               ▼
-                                      [ x W_down ] ──► Output (d_model = 4096)
-```
+![Figure 5.2: SwiGLU Multiplicative Gating Mechanism](assets/diagram_5_swiglu.jpg)
 
 #### 📐 The Mathematics & Working
 $$\mathbf{h}_{\text{ffn}} = \left( (\mathbf{x} W_{\text{gate}} \cdot \text{sigmoid}(\mathbf{x} W_{\text{gate}})) \odot (\mathbf{x} W_{\text{up}}) \right) W_{\text{down}}$$
@@ -1461,13 +1153,7 @@ $$P(\text{token}_i) = \frac{\exp(z_i / T)}{\sum_{j=1}^V \exp(z_j / T)}$$
 * When $T \to 0$ (e.g. $T = 0.1$): The difference between the highest logit ($14.2 / 0.1 = 142$) and second-highest ($12.8 / 0.1 = 128$) becomes astronomical ($\Delta = 14$), pushing $P(\text{top}) \to 99.99\%$.
 * When $T \to \infty$ (e.g. $T = 5.0$): Differences between logits compress toward zero ($14.2 / 5 \approx 2.84, 12.8 / 5 \approx 2.56$), flattening the probabilities toward a uniform random draw.
 
-```
-Logits: [ "code": 10.0,  "script": 8.0,  "banana": 2.0 ]
-
-T = 0.2 (Cold):  ──► [ "code": 99.9%, "script": 0.1%,  "banana": 0.0% ]  (Precise, deterministic)
-T = 1.0 (Normal):──► [ "code": 87.8%, "script": 11.9%, "banana": 0.3% ]  (Balanced)
-T = 3.0 (Hot):   ──► [ "code": 54.0%, "script": 32.0%, "banana": 14.0% ] (High creativity / chaos)
-```
+![Figure 6.2: Temperature Entropy Calibration](assets/diagram_6_sampling.jpg)
 
 #### 📐 The Mathematics & Working
 $$P_i(T) = \frac{\exp(z_i / T)}{\sum_{k=1}^V \exp(z_k / T)}$$
@@ -1503,17 +1189,7 @@ Introduced by Holtzman et al. (2019), **Nucleus (Top-$p$) Sampling** dynamically
 * If the model is **very confident** (e.g., `"The capital of France is [Paris]"`), a single token might hold $92\%$ probability; the nucleus pool shrinks to size **1** (preventing hallucination).
 * If the model is **uncertain** (e.g., `"The dog was [happy, playful, barking, sleeping]"`), the probability is spread evenly, and the nucleus pool automatically expands to **20+ tokens**.
 
-```
-Tokens sorted by probability:
-["Paris": 0.88, "Lyon": 0.05, "Marseille": 0.03, "banana": 0.001, ...]
-
-Target: Top-p = 0.90
-1. Accumulate:
-   "Paris" (0.88) ──► Sum = 0.88 (< 0.90)
-   "Lyon"  (0.05) ──► Sum = 0.93 (>= 0.90! STOP!)
-2. Discard everything else! ("Marseille", "banana", etc. cut off!)
-3. Re-normalize ["Paris", "Lyon"] to sum to 1.0!
-```
+![Figure 6.3: Nucleus Top-p Probability Mass Cutoff](assets/diagram_6_sampling.jpg)
 
 #### 📐 The Mathematics & Working
 $$P'(w_i) = \begin{cases} \frac{P(w_i)}{\sum_{w_j \in V^{(p)}} P(w_j)} & \text{if } w_i \in V^{(p)} \\ 0 & \text{otherwise} \end{cases}$$
@@ -1641,18 +1317,7 @@ $$\mathcal{L}_{\text{DPO}}(\theta) = -\mathbb{E}_{(x, y_w, y_l)} \left[ \log \si
 
 The model simply calculates the log-probabilities of both the preferred answer $y_w$ and the dispreferred answer $y_l$ under both the active model and the frozen reference model, and performs standard gradient descent!
 
-```
-Dataset: (Prompt x, Preferred y_w, Dispreferred y_l)
-                    │
-                    ▼
-  Compute Log-Ratios: log( π_θ / π_ref ) for both y_w and y_l
-                    │
-                    ▼
-     Delta = Ratio(y_w) - Ratio(y_l)
-                    │
-                    ▼
-     Loss = -log( sigmoid( β * Delta ) )  <── Simple binary cross-entropy!
-```
+![Figure 7.3: Direct Preference Optimization (DPO) Loss Architecture](assets/diagram_7_3_dpo.jpg)
 
 #### 📐 The Mathematics & Working
 $$\nabla_\theta \mathcal{L}_{\text{DPO}} = -\beta \, \sigma(\hat{r}_l - \hat{r}_w) \left[ \nabla_\theta \log \pi_\theta(y_w \mid x) - \nabla_\theta \log \pi_\theta(y_l \mid x) \right]$$

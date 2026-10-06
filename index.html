@@ -253,28 +253,7 @@ hr {
 
 <p>The Transformer architecture solves this architectural bottleneck by decoupling the <strong>token identity</strong> from the <strong>contextual token state</strong>. While the network begins with a static lookup coordinate, successive Self-Attention layers calculate affinity scores across all surrounding tokens, dynamically shifting the vector along semantic trajectories.</p>
 
-<pre class="code-block"><code>+-------------------------------------------------------------------------------+
-<p>|                        STATIC EMBEDDING COLLAPSE (Word2Vec)                   |</p>
-<p>|                                                                               |</p>
-<p>|   Sense A: Financial Institution ("bank") ───\                               |</p>
-<p>|                                               +──► [ e_bank in R^d ]          |</p>
-<p>|   Sense B: River Embankment ("bank")      ───/     (Single averaged centroid) |</p>
-<p>|                                                                               |</p>
-<p>|   "He deposited money in the bank"   ───► e_bank (No contextual distinction)   |</p>
-<p>|   "The river overflowed the bank"    ───► e_bank (No contextual distinction)   |</p>
-<p>+-------------------------------------------------------------------------------+</p>
-<p>│</p>
-<p>▼</p>
-<p>+-------------------------------------------------------------------------------+</p>
-<p>|                   TRANSFORMER DYNAMIC CONTEXTUAL TRAJECTORY                   |</p>
-<p>|                                                                               |</p>
-<p>|   [Context: "deposited", "money"] ──► Self-Attention ──► Shifts toward        |</p>
-<p>|                                                          Finance Subspace     |</p>
-<p>|                                                                               |</p>
-<p>|   [Context: "river", "overflowed"] ─► Self-Attention ──► Shifts toward        |</p>
-<p>|                                                          Hydrology Subspace   |</p>
-<p>+-------------------------------------------------------------------------------+</p>
-<p></code></pre></p>
+<p>![Figure 0.1: Static Word2Vec Context Collapse vs Dynamic Contextual Trajectory](assets/diagram_0_polysemy.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 <p>In Word2Vec, the lookup function <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold">e</mi><mtext>static</mtext></msub><mo>:</mo><mi mathvariant="script">V</mi><mo>→</mo><msup><mi mathvariant="double-struck">R</mi><mi>d</mi></msup></mrow><annotation encoding="application/x-tex">\mathbf{e}_{\text{static}}: \mathcal{V} \to \mathbb{R}^d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5944em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathbf">e</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3175em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">static</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">:</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathcal" style="margin-right:0.0822em;">V</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span></span></span></span></span></span></span></span> satisfies:</p>
@@ -403,30 +382,7 @@ hr {
 
 <p>Layers communicate by reading from the stream via projection matrices and writing updates back via additive vector accumulation.</p>
 
-<pre class="code-block"><code>Token ID: 4125 ("quantum")
-<p>│</p>
-<p>▼ (One-hot indicator vector)</p>
-<p>[ 0, 0, ..., 1 (index 4125), ..., 0 ]  x  [ W_E (V x d_model) ]</p>
-<p>│</p>
-<p>▼ (Direct Row Indexing)</p>
-<p>[ -0.042, 0.819, 0.120, ..., 0.541 ] in R^{d_model}</p>
-<p>│</p>
-<p>▼  x sqrt(d_model) + Positional Signal</p>
-<p>============================= RESIDUAL STREAM =============================</p>
-<p>Layer 0 State:  x_i^(0) ────────────────────────────────────────────────►</p>
-<p>│                               ▲</p>
-<p>(Read)                          (Write)</p>
-<p>▼                               │</p>
-<p>[ Multi-Head Attention ] ──► Delta x_attn^(1)</p>
-<p>│                               ▲</p>
-<p>(Read)                          (Write)</p>
-<p>▼                               │</p>
-<p>[ Feed-Forward MLP ]    ──► Delta x_mlp^(1)</p>
-<p>│                               ▲</p>
-<p>▼                               │</p>
-<p>Layer 1 State:  x_i^(1) = x_i^(0) + Delta x_attn^(1) + Delta x_mlp^(1) ──►</p>
-<p>===========================================================================</p>
-<p></code></pre></p>
+<p>![Figure 0.2: Token Embedding Matrix Lookup and Residual Stream Projection](assets/diagram_0_2_embedding.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 <p>The embedding lookup and initial residual stream injection are defined by:</p>
@@ -610,38 +566,7 @@ hr {
 
 <p>This mathematical equality proves that self-attention is strictly <strong>permutation equivariant</strong>: permuting the input sequence merely permutes the corresponding rows of the output matrix without altering any interaction score. If the output rows are pooled or compared independently of row order, the operation is <strong>permutation invariant</strong>. Without an injected positional signal, the network cannot distinguish where a word appears in time or space.</p>
 
-<pre class="code-block"><code>+-------------------------------------------------------------------------------+
-<p>|                       RECURRENT (RNN) SEQUENTIAL BIAS                         |</p>
-<p>|                                                                               |</p>
-<p>|   x_1 ("Dog") ──► [Cell 1] ──h_1──► [Cell 2] ──h_2──► [Cell 3]                |</p>
-<p>|                                        ▲                 ▲                    |</p>
-<p>|   x_2 ("bites") ───────────────────────┘                 │                    |</p>
-<p>|   x_3 ("man")   ─────────────────────────────────────────┘                    |</p>
-<p>|   --&gt; Architectural time-arrow enforces order intrinsically.                  |</p>
-<p>+-------------------------------------------------------------------------------+</p>
-
-<p>+-------------------------------------------------------------------------------+</p>
-<p>|                     TRANSFORMER PARALLEL SET OPERATION                        |</p>
-<p>|                                                                               |</p>
-<p>|   X = [ x_dog; x_bites; x_man ]                                               |</p>
-<p>|                                                                               |</p>
-<p>|         Q = X W_Q           K = X W_K                   V = X W_V             |</p>
-<p>|             │                   │                           │                 |</p>
-<p>|             └─────────► [ Q K^T / sqrt(d_k) ] ◄─────────────┘                 |</p>
-<p>|                                 │                                             |</p>
-<p>|                                 ▼                                             |</p>
-<p>|                             [Softmax]                                         |</p>
-<p>|                                 │                                             |</p>
-<p>|                                 ▼                                             |</p>
-<p>|                           Attention Matrix A                                  |</p>
-<p>|                                 │                                             |</p>
-<p>|                                 ▼                                             |</p>
-<p>|                               A x V                                           |</p>
-<p>|                                                                               |</p>
-<p>|   Permute rows of X ──► Rows of A x V permute identically.                    |</p>
-<p>|   --&gt; Zero knowledge of whether "dog" was token #1 or token #3!               |</p>
-<p>+-------------------------------------------------------------------------------+</p>
-<p></code></pre></p>
+<p>![Figure 1.1: Recurrent Sequential Processing vs Transformer Permutation Invariance](assets/diagram_1_1_permutation.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 <p>The permutation equivariance condition for self-attention is formally stated as:</p>
@@ -750,23 +675,7 @@ hr {
 
 <p>This guarantees that the self-attention mechanism can learn to attend by relative position using simple bilinear projections.</p>
 
-<pre class="code-block"><code>Dimension Index (2i, 2i+1)
-<p>│</p>
-<p>Low   │  i=0 (High freq, lambda = 6 tokens)   ~~/\~~/\~~/\~~/\~~/\~~/\~~</p>
-<p>Index │  i=1                                  ~~~/\~~~~/\~~~~/\~~~~/\~~~</p>
-<p>│  i=2                                  ~~~~~/\~~~~~~~~/\~~~~~~~~~</p>
-<p>High  │  ...                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~</p>
-<p>Index ▼  i=d/2-1 (Low freq, lambda = 62,831)  \________________________/</p>
-<p>──────────────────────────────────────────────────────────────────►</p>
-<p>Position pos: 0      1      2      3      4      ...      N</p>
-
-<p>Token Embedding e_pos  : [  0.42, -0.19,  0.88, ...,  0.15 ]</p>
-<p>+ (Element-wise Addition)</p>
-<p>Sinusoidal Vector PE_pos: [  0.00,  1.00,  0.84, ...,  0.01 ]</p>
-<p>│</p>
-<p>▼</p>
-<p>Residual Stream x_pos^(0): [  0.42,  0.81,  1.72, ...,  0.16 ]</p>
-<p></code></pre></p>
+<p>![Figure 1.2: Frequency Spectrum of Sinusoidal Positional Encoding](assets/diagram_1_2_sinusoidal.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 <p>The absolute sinusoidal positional encoding vector <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><msub><mi>E</mi><mrow><mi>p</mi><mi>o</mi><mi>s</mi></mrow></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><msub><mi>d</mi><mtext>model</mtext></msub></msup></mrow><annotation encoding="application/x-tex">PE_{pos} \in \mathbb{R}^{d_{\text{model}}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.9694em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">P</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0576em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0576em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span><span class="mord mathnormal mtight">os</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3488em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="katex-sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">model</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1512em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span> is defined element-wise by:</p>
@@ -885,42 +794,7 @@ hr {
 
 <p>The dot product depends purely on the relative distance <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>−</mo><mi>m</mi></mrow><annotation encoding="application/x-tex">n - m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span>. Furthermore, RoPE is applied <strong>only</strong> to Query and Key projections; Value vectors (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">v</mi></mrow><annotation encoding="application/x-tex">\mathbf{v}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4444em;"></span><span class="mord mathbf" style="margin-right:0.016em;">v</span></span></span></span>) and the residual stream remain completely untouched.</p>
 
-<pre class="code-block"><code>       Query vector at pos m                       Key vector at pos n
-<p>q_m = [ q_0, q_1 ]                          k_n = [ k_0, k_1 ]</p>
-<p>│                                           │</p>
-<p>▼                                           ▼</p>
-<p>Rotate by m <em> theta                         Rotate by n </em> theta</p>
-<p>│                                           │</p>
-<p>▼                                           ▼</p>
-<p>R_{theta, m} q_m                            R_{theta, n} k_n</p>
-<p>\                                           /</p>
-<p>\                                         /</p>
-<p>▼                                       ▼</p>
-<p>Inner Product: &lt; R_{theta, m} q_m,  R_{theta, n} k_n &gt;</p>
-<p>│</p>
-<p>▼</p>
-<p>Angle difference = (m - n) * theta!</p>
-<p>--&gt; Absolute positions m and n cancel out completely.</p>
-<p>--&gt; Only relative displacement (m - n) determines attention.</p>
-
-<p>+-------------------------------------------------------------------------------+</p>
-<p>|                       2D SUBSPACE ROTATION GEOMETRY                           |</p>
-<p>|                                                                               |</p>
-<p>|                             ^ Im                                              |</p>
-<p>|                             │      R_{theta, m} q                             |</p>
-<p>|                             │         /                                       |</p>
-<p>|                             │        /  Angle = m * theta                     |</p>
-<p>|                             │       /                                         |</p>
-<p>|                             │      /  ) relative angle = (m - n) * theta      |</p>
-<p>|                             │     /                                           |</p>
-<p>|                             │    /                                            |</p>
-<p>|                             │   /------ R_{theta, n} k                        |</p>
-<p>|                             │  /       / Angle = n * theta                    |</p>
-<p>|                             └─/───────/──────────────► Re                     |</p>
-<p>|                                                                               |</p>
-<p>|   Preserves vector norm: ||R q||_2 = ||q||_2  (Orthogonal isometry!)          |</p>
-<p>+-------------------------------------------------------------------------------+</p>
-<p></code></pre></p>
+<p>![Figure 1.3: Rotary Position Embedding 2D Complex Subspace Rotation](assets/diagram_1_rope.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 <p>The rotary transformation applied to query vector <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold">q</mi><mi>m</mi></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><msub><mi>d</mi><mi>k</mi></msub></msup></mrow><annotation encoding="application/x-tex">\mathbf{q}_m \in \mathbb{R}^{d_k}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7335em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathbf">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">m</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3488em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="katex-sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1512em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span> and key vector <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold">k</mi><mi>n</mi></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><msub><mi>d</mi><mi>k</mi></msub></msup></mrow><annotation encoding="application/x-tex">\mathbf{k}_n \in \mathbb{R}^{d_k}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathbf">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3488em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="katex-sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1512em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span> is:</p>
@@ -1025,16 +899,7 @@ hr {
 <p class="num-item"><strong>2.</strong> <strong>Key Matrix (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>K</mi></msub></mrow><annotation encoding="application/x-tex">W_K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0715em;">K</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>)</strong>: Projects <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span></span></span></span> into keys <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span></span></span></span>, representing the addressable semantic catalog of each token position.</p>
 <p class="num-item"><strong>3.</strong> <strong>Value Matrix (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>V</mi></msub></mrow><annotation encoding="application/x-tex">W_V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.2222em;">V</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>)</strong>: Projects <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span></span></span></span> into values <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.2222em;">V</span></span></span></span>, containing the substantive semantic payload extracted if a key is successfully matched.</p>
 
-<pre class="code-block"><code>       Input Token Representations X  [N x d_model]
-<p>|-------------------|-------------------|</p>
-<p>|                   |                   |</p>
-<p>v                   v                   v</p>
-<p>[Linear: W_Q]       [Linear: W_K]       [Linear: W_V]</p>
-<p>|                   |                   |</p>
-<p>v                   v                   v</p>
-<p>Queries Q             Keys K              Values V</p>
-<p>[N x d_k]           [N x d_k]           [N x d_v]</p>
-<p></code></pre></p>
+<p>![Figure 2.1: Query, Key, and Value Linear Projections](assets/diagram_2_1_projections.jpg)</p>
 
 <div class="svg-container"><svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
 <p><defs></p>
@@ -1139,16 +1004,7 @@ hr {
 <li>The resulting matrix <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mo>=</mo><mi>Q</mi><msup><mi>K</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex">S = Q K^T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0576em;">S</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1.0358em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0715em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.1389em;">T</span></span></span></span></span></span></span></span></span></span></span> has dimensions <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>×</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">N \times N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span>, where entry <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>i</mi><mo separator="true">,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(i, j)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">i</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span><span class="mclose">)</span></span></span></span> represents the raw score of how strongly token <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> attends to token <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span></span></span></span>.</li>
 </ul>
 
-<pre class="code-block"><code>     Queries Q [N x d_k]           Keys Transposed K^T [d_k x N]
-<p>[  q_1  ]                      [  |     |         |    ]</p>
-<p>[  q_2  ]          x           [ k_1   k_2  ...  k_N   ]</p>
-<p>[  ...  ]                      [  |     |         |    ]</p>
-<p>[  q_N  ]</p>
-<p>||</p>
-<p>\/</p>
-<p>Affinity Matrix S = Q K^T [N x N]</p>
-<p>Row i, Column j: s_{i,j} = q_i · k_j</p>
-<p></code></pre></p>
+<p>![Figure 2.2: Raw Compatibility Scoring Matrix Multiplication](assets/diagram_2_2_dot_product.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 <p>The raw compatibility scoring operation is defined as:</p>
@@ -1277,16 +1133,7 @@ hr {
 <p>c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z</p>
 <p>M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1778em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4461em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.0359em;">q</span><span class="mbin mtight">⋅</span><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.538em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size2">)</span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1.296em;vertical-align:-0.4509em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3488em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="katex-sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1512em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4509em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord text"><span class="mord">Var</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0359em;">q</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0315em;">k</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1.3528em;vertical-align:-0.4509em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.902em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3488em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="katex-sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1512em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4159em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3488em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="katex-sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1512em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4509em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1.0</span></span></span></span>.</p>
 
-<pre class="code-block"><code> Unscaled Dot Products (d_k = 128)          Scaled Dot Products
-<p>Variance = d_k = 128                       Variance = 1.0</p>
-<p>Std Dev ≈ 11.31                            Std Dev = 1.0</p>
-<p>Logits spread: [-35, +35]                  Logits spread: [-3.0, +3.0]</p>
-<p>|                                          |</p>
-<p>v                                          v</p>
-<p>Softmax Saturation!                        Healthy Softmax!</p>
-<p>One-hot hard routing.                      Smooth distributions.</p>
-<p>Gradients vanish (~0).                     Robust gradient flow.</p>
-<p></code></pre></p>
+<p>![Figure 2.3: Variance Scaling Factor 1/sqrt(d_k) and Gradient Active Region](assets/diagram_2_3_scaling.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 <p>The scaled logit matrix <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0576em;">S</span></span></span></span> is expressed as:</p>
@@ -1400,16 +1247,7 @@ hr {
 
 <p>This guarantees that the maximum exponent is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>exp</mi><mo>⁡</mo><mo stretchy="false">(</mo><mn>0</mn><mo stretchy="false">)</mo><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\exp(0) = 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">exp</span><span class="mopen">(</span><span class="mord">0</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>, preventing IEEE 754 float16/bfloat16 overflow while preserving exact probability ratios.</p>
 
-<pre class="code-block"><code> Scaled Logits Row i:    [  1.2,   3.8,  -0.5,   2.1  ]
-<p>|</p>
-<p>Subtract Max (3.8) & Exp</p>
-<p>|</p>
-<p>Exponentiated:          [ 0.074, 1.000, 0.014, 0.183 ]  --&gt; Sum = 1.271</p>
-<p>|</p>
-<p>Divide by Sum</p>
-<p>|</p>
-<p>Attention Weights A:    [ 0.058, 0.787, 0.011, 0.144 ]  --&gt; Sum = 1.000 (Simplex)</p>
-<p></code></pre></p>
+<p>![Figure 2.4: Softmax Row-wise Probability Normalization](assets/diagram_2_4_softmax.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 <p>The attention weight matrix <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>N</mi><mo>×</mo><mi>N</mi></mrow></msup></mrow><annotation encoding="application/x-tex">A \in \mathbb{R}^{N \times N}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7224em;vertical-align:-0.0391em;"></span><span class="mord mathnormal">A</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8413em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span></span></span></span></span></span></span></span></span> is formulated as:</p>
@@ -1521,14 +1359,7 @@ hr {
 
 <p>If token <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> attends <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>90</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">90\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8056em;vertical-align:-0.0556em;"></span><span class="mord">90%</span></span></span></span> to token <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">10\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8056em;vertical-align:-0.0556em;"></span><span class="mord">10%</span></span></span></span> to token <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.0315em;">k</span></span></span></span>, the resulting representation <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>z</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">z_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.044em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.044em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> is composed of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.90</mn><msub><mi>v</mi><mi>j</mi></msub><mo>+</mo><mn>0.10</mn><msub><mi>v</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">0.90 v_j + 0.10 v_k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.9305em;vertical-align:-0.2861em;"></span><span class="mord">0.90</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">v</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0572em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.7944em;vertical-align:-0.15em;"></span><span class="mord">0.10</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">v</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>. This contextual representation is subsequently passed to the multi-head projection or residual add-and-norm pipeline.</p>
 
-<pre class="code-block"><code> Attention Weights A [N x N]           Values V [N x d_v]       Output Z [N x d_v]
-<p>[ A_{1,1} A_{1,2} ... A_{1,N} ]       [ --- v_1 --- ]          [ --- z_1 --- ]</p>
-<p>[ A_{2,1} A_{2,2} ... A_{2,N} ]   x   [ --- v_2 --- ]    =     [ --- z_2 --- ]</p>
-<p>[   ...     ...   ...   ...   ]       [     ...     ]          [     ...     ]</p>
-<p>[ A_{N,1} A_{N,2} ... A_{N,N} ]       [ --- v_N --- ]          [ --- z_N --- ]</p>
-
-<p>z_i = sum_{j=1}^N ( A_{i,j} * v_j )</p>
-<p></code></pre></p>
+<p>![Figure 2.5: Weighted Value Aggregation and Output Representation](assets/diagram_2_5_value_aggregation.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 <p>The weighted aggregation is computed by matrix multiplication:</p>
@@ -1604,26 +1435,7 @@ hr {
 
 <p>Where each head operates on vectors of reduced dimension <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>k</mi></msub><mo>=</mo><msub><mi>d</mi><mi>v</mi></msub><mo>=</mo><msub><mi>d</mi><mtext>model</mtext></msub><mi mathvariant="normal">/</mi><mi>h</mi></mrow><annotation encoding="application/x-tex">d_k = d_v = d_{\text{model}} / h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0359em;">v</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">model</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">/</span><span class="mord mathnormal">h</span></span></span></span>. This ensures that the total computational cost of multi-head attention is identical to single-head attention with full dimensionality <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mtext>model</mtext></msub></mrow><annotation encoding="application/x-tex">d_{\text{model}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">model</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>, while multiplying the model's expressive representational bandwidth by <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span>.</p>
 
-<pre class="code-block"><code>                        Input Representation X [N x d_model]
-<p>|</p>
-<p>+---------------------------------+---------------------------------+</p>
-<p>|                                 |                                 |</p>
-<p>v                                 v                                 v</p>
-<p>[Head 1 Projections]              [Head 2 Projections]             [Head h Projections]</p>
-<p>W_1^Q, W_1^K, W_1^V               W_2^Q, W_2^K, W_2^V               W_h^Q, W_h^K, W_h^V</p>
-<p>|                                 |                                 |</p>
-<p>v                                 v                                 v</p>
-<p>Attention(Q_1, K_1, V_1)          Attention(Q_2, K_2, V_2)          Attention(Q_h, K_h, V_h)</p>
-<p>[N x (d_model/h)]                 [N x (d_model/h)]                 [N x (d_model/h)]</p>
-<p>|                                 |                                 |</p>
-<p>+---------------------------------+---------------------------------+</p>
-<p>|</p>
-<p>v</p>
-<p>Concatenation [N x d_model]</p>
-<p>|</p>
-<p>v</p>
-<p>Output Projection W^O</p>
-<p></code></pre></p>
+<p>![Figure 3.1: Multi-Head Attention Subspace Splitting](assets/diagram_3_1_multihead.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 <p>The multi-head attention splitting is formalized as:</p>
@@ -1705,21 +1517,7 @@ hr {
 
 <p>This operation can be interpreted as a set of linear combinations that blend features discovered in Head <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span></span></span></span> with features discovered in Head <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi></mrow><annotation encoding="application/x-tex">B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0502em;">B</span></span></span></span>, producing a unified, coherent update vector suitable for addition to the residual stream.</p>
 
-<pre class="code-block"><code> Head 1: [N x d_v]   Head 2: [N x d_v]  ...  Head h: [N x d_v]
-<p>\                 |                 /</p>
-<p>\                |                /</p>
-<p>v               v               v</p>
-<p>Concatenated Matrix H_concat: [N x (h * d_v)] = [N x d_model]</p>
-<p>|</p>
-<p>v</p>
-<p>Projection Matrix W^O [d_model x d_model]</p>
-<p>|</p>
-<p>v</p>
-<p>Final MHA Output: [N x d_model]</p>
-<p>|</p>
-<p>v</p>
-<p>Add to Residual Connection: X + Z_out</p>
-<p></code></pre></p>
+<p>![Figure 3.2: Multi-Head Concatenation and Output Projection W_O](assets/diagram_3_2_output_proj.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 <p>The output linear projection is expressed as:</p>
@@ -1800,19 +1598,7 @@ hr {
 
 <p>Consequently, token <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> assigns zero probability mass to any token at index <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mo>&gt;</mo><mi>i</mi></mrow><annotation encoding="application/x-tex">j &gt; i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span>.</p>
 
-<pre class="code-block"><code>     Raw Scaled Logits S                  Causal Mask M                 Masked Logits (S + M)
-<p>[ s_{1,1} s_{1,2} s_{1,3} ]        [   0   -inf  -inf ]         [ s_{1,1}  -inf   -inf  ]</p>
-<p>[ s_{2,1} s_{2,2} s_{2,3} ]   +    [   0     0   -inf ]    =    [ s_{2,1}  s_{2,2} -inf ]</p>
-<p>[ s_{3,1} s_{3,2} s_{3,3} ]        [   0     0     0  ]         [ s_{3,1}  s_{3,2} s_{3,3}]</p>
-<p>|</p>
-<p>Softmax(S + M)</p>
-<p>|</p>
-<p>v</p>
-<p>Lower-Triangular Weights A</p>
-<p>[ 1.0     0.0     0.0   ]</p>
-<p>[ a_{2,1} a_{2,2} 0.0   ]</p>
-<p>[ a_{3,1} a_{3,2} a_{3,3}]</p>
-<p></code></pre></p>
+<p>![Figure 3.3: Causal Attention Masking Matrix Arithmetic](assets/diagram_3_kv_cache.jpg)</p>
 
 <div class="svg-container"><svg viewBox="0 0 620 220" xmlns="http://www.w3.org/2000/svg">
 <p><defs></p>
@@ -2013,30 +1799,7 @@ hr {
 
 
 
-<pre class="code-block"><code>================ NAIVE INFERENCE (No Cache) ===============
-<p>Step t:</p>
-<p>Pass tokens [x_1, x_2, ..., x_t] through full network</p>
-<p>Compute Q, K, V for ALL t tokens  --&gt; O(t * d_model^2) FLOPs!</p>
-<p>Discard everything, repeat for step t+1.</p>
-
-<p>================ OPTIMIZED INFERENCE (KV-Cache) ============</p>
-<p>GPU HBM:</p>
-<p>Cached Keys:   K_{&lt;t} = [ k_1, k_2, ..., k_{t-1} ]  [ (t-1) x d_k ]</p>
-<p>Cached Values: V_{&lt;t} = [ v_1, v_2, ..., v_{t-1} ]  [ (t-1) x d_v ]</p>
-
-<p>Step t:</p>
-<p>Input: ONLY token x_t [1 x d_model]</p>
-<p>Compute: q_t = x_t W_Q,  k_t = x_t W_K,  v_t = x_t W_V  --&gt; O(1 * d_model^2) FLOPs!</p>
-  
-<p>Update Cache:</p>
-<p>K_{&lt;=t} = Concat( K_{&lt;t}, k_t )</p>
-<p>V_{&lt;=t} = Concat( V_{&lt;t}, v_t )</p>
-  
-<p>Attention:</p>
-<p>q_t [1 x d_k]  x  K_{&lt;=t}^T [d_k x t]  --&gt;  Attn Logits [1 x t]</p>
-<p>Softmax( Logits / sqrt(d_k) )         --&gt;  Attn Weights [1 x t]</p>
-<p>Attn Weights [1 x t]  x  V_{&lt;=t} [t x d_v] --&gt;  Output z_t [1 x d_v]</p>
-<p></code></pre></p>
+<p>![Figure 3.4: Autoregressive KV-Cache VRAM Dynamic Memory](assets/diagram_3_kv_cache.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 <p>At decode step <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6151em;"></span><span class="mord mathnormal">t</span></span></span></span>, the state update and attention calculation are defined as:</p>
@@ -2141,21 +1904,7 @@ hr {
 
 <p>Notice the identity term <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">I</mi></mrow><annotation encoding="application/x-tex">\mathbf{I}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6861em;"></span><span class="mord mathbf">I</span></span></span></span>: even if the sublayer's gradient completely vanishes (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mrow><mi mathvariant="normal">∂</mi><mtext>Sublayer</mtext></mrow><mrow><mi mathvariant="normal">∂</mi><msub><mi mathvariant="bold">x</mi><mtext>in</mtext></msub></mrow></mfrac><mo>≈</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\frac{\partial \text{Sublayer}}{\partial \mathbf{x}_{\text{in}}} \approx 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.3773em;vertical-align:-0.4451em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9322em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight" style="margin-right:0.0556em;">∂</span><span class="mord mtight"><span class="mord mathbf mtight">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.334em;"><span style="top:-2.357em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="katex-sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">in</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4461em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight" style="margin-right:0.0556em;">∂</span><span class="mord text mtight"><span class="mord mtight">Sublayer</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4451em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>), the error gradient flows backwards completely unimpeded through the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">+1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">+</span><span class="mord">1</span></span></span></span> identity path!</p>
 
-<pre class="code-block"><code>                    Residual Stream Highway
-<p>───────────────────────────────────────► (+) ────────► Layer Output</p>
-<p>▲                      │</p>
-<p>│                      │</p>
-<p>Identical Copy                 │</p>
-<p>│                      │</p>
-<p>───────────┬───────┘                      │</p>
-<p>│                              │</p>
-<p>▼                              │</p>
-<p>[ Sub-Layer ]                         │</p>
-<p>(Attention or FFN)                    │</p>
-<p>│                              │</p>
-<p>▼                              │</p>
-<p>Delta Vector Δx ─────────────────────┘</p>
-<p></code></pre></p>
+<p>![Figure 4.1: Residual Stream Highway Architecture](assets/diagram_4_residual_norm.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 
@@ -2219,9 +1968,7 @@ hr {
 
 <p>By dropping mean calculation and the bias term <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0528em;">β</span></span></span></span>, RMSNorm reduces GPU memory reads/writes by ~10–50% per normalization layer with zero loss in training quality.</p>
 
-<pre class="code-block"><code>LayerNorm:  Vector x ──► [Subtract Mean μ] ──► [Divide by StdDev σ] ──► [Scale by γ + Shift by β]
-<p>RMSNorm:    Vector x ────────────────────────► [Divide by RMS(x)]  ──► [Scale by γ]  (Faster! No bias!)</p>
-<p></code></pre></p>
+<p>![Figure 4.2: Layer Normalization vs RMSNorm Architecture](assets/diagram_4_2_rmsnorm.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 
@@ -2284,18 +2031,7 @@ hr {
 
 <p>Here, the residual highway passes through completely untouched (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi mathvariant="bold">x</mi><mrow><mo stretchy="false">(</mo><mi>l</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></msup><mo>+</mo><mo>…</mo></mrow><annotation encoding="application/x-tex">\mathbf{x}^{(l-1)} + \dots</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.9713em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathbf">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.888em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathnormal mtight" style="margin-right:0.0197em;">l</span><span class="mbin mtight">−</span><span class="mord mtight">1</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.123em;"></span><span class="minner">…</span></span></span></span>). Normalization only acts on the side branch right before entering Attention or FFN!</p>
 
-<pre class="code-block"><code>[Post-LN Architecture (2017)]
-<p>x_in ──► [ + ] ──► [ LayerNorm ] ──────────────► x_out  (Norm sits directly ON highway; gradients degrade)</p>
-<p>▲</p>
-<p>│</p>
-<p>[Sublayer]</p>
-
-<p>[Pre-LN Architecture (Modern LLMs)]</p>
-<p>x_in ──────────────────────► [ + ] ────────────► x_out  (Highway is 100% UNTOUCHED! Perfect gradient flow)</p>
-<p>│                   ▲</p>
-<p>▼                   │</p>
-<p>[ LayerNorm ] ──► [ Sublayer ]</p>
-<p></code></pre></p>
+<p>![Figure 4.3: Post-LN vs Pre-LN Architectural Flow](assets/diagram_4_3_pre_post_ln.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 
@@ -2342,23 +2078,7 @@ hr {
 <p class="num-item"><strong>2.</strong> <strong>The Non-Linear Activation (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">σ</span></span></span></span>):</strong> Introduces non-linearity (e.g. ReLU, GeLU, Swish), ensuring the model can represent complex non-linear functions rather than collapsing into a single matrix.</p>
 <p class="num-item"><strong>3.</strong> <strong>The Second Layer (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mn>2</mn></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><msub><mi>d</mi><mrow><mi>f</mi><mi>f</mi></mrow></msub><mo>×</mo><msub><mi>d</mi><mrow><mi>m</mi><mi>o</mi><mi>d</mi><mi>e</mi><mi>l</mi></mrow></msub></mrow></msup></mrow><annotation encoding="application/x-tex">W_2 \in \mathbb{R}^{d_{ff} \times d_{model}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3488em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="katex-sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.1076em;">f</span><span class="mord mathnormal mtight" style="margin-right:0.1076em;">f</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2901em;"><span></span></span></span></span></span></span><span class="mbin mtight">×</span><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3488em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="katex-sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">m</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight" style="margin-right:0.0197em;">l</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1512em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>):</strong> Acts as the <em>Value generator</em>, projecting the activated memories back into the residual stream dimension, injecting concrete factual details into the token.</p>
 
-<pre class="code-block"><code>Residual Vector x (d_model = 4096)
-<p>│</p>
-<p>▼</p>
-<p>[ Linear Expansion W_1 ]</p>
-<p>│</p>
-<p>▼</p>
-<p>Wider Hidden Layer (d_ff = 14336)  &lt;── Fires on conceptual patterns (Key Detectors)</p>
-<p>│</p>
-<p>▼</p>
-<p>[ Activation Function σ ]</p>
-<p>│</p>
-<p>▼</p>
-<p>[ Linear Projection W_2 ]        &lt;── Emits semantic payload (Value Generators)</p>
-<p>│</p>
-<p>▼</p>
-<p>Output Vector (d_model = 4096) ──► Added to Residual Stream</p>
-<p></code></pre></p>
+<p>![Figure 5.1: Two-Layer Feed-Forward Network (FFN) Expansion](assets/diagram_5_1_ffn_expansion.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 
@@ -2411,16 +2131,7 @@ hr {
 
 <p>To keep total parameter count identical to traditional <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4</mn><mo>×</mo></mrow><annotation encoding="application/x-tex">4\times</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">4</span><span class="mord">×</span></span></span></span> FFNs, modern models set <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mrow><mi>f</mi><mi>f</mi></mrow></msub><mo>≈</mo><mfrac><mn>8</mn><mn>3</mn></mfrac><msub><mi>d</mi><mrow><mi>m</mi><mi>o</mi><mi>d</mi><mi>e</mi><mi>l</mi></mrow></msub></mrow><annotation encoding="application/x-tex">d_{ff} \approx \frac{8}{3} d_{model}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.9805em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.1076em;">f</span><span class="mord mathnormal mtight" style="margin-right:0.1076em;">f</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1.1901em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">3</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">8</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">m</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight" style="margin-right:0.0197em;">l</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> (e.g., in LLaMA-3 8B: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mrow><mi>m</mi><mi>o</mi><mi>d</mi><mi>e</mi><mi>l</mi></mrow></msub><mo>=</mo><mn>4096</mn></mrow><annotation encoding="application/x-tex">d_{model} = 4096</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">m</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight" style="margin-right:0.0197em;">l</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">4096</span></span></span></span>, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mrow><mi>f</mi><mi>f</mi></mrow></msub><mo>=</mo><mn>14336</mn></mrow><annotation encoding="application/x-tex">d_{ff} = 14336</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.9805em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.1076em;">f</span><span class="mord mathnormal mtight" style="margin-right:0.1076em;">f</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">14336</span></span></span></span>).</p>
 
-<pre class="code-block"><code>Input x (d_model = 4096)
-<p>├───► [ x W_gate ] ──► [ Swish Act ] ──┐</p>
-<p>│                                       ▼</p>
-<p>│                                     [ ⊙ ] Multiplicative Gate</p>
-<p>│                                       ▲</p>
-<p>└───► [ x W_up   ] ────────────────────┘</p>
-<p>│</p>
-<p>▼</p>
-<p>[ x W_down ] ──► Output (d_model = 4096)</p>
-<p></code></pre></p>
+<p>![Figure 5.2: SwiGLU Multiplicative Gating Mechanism](assets/diagram_5_swiglu.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 
@@ -2529,12 +2240,7 @@ hr {
 <li>When <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>→</mo><mi mathvariant="normal">∞</mi></mrow><annotation encoding="application/x-tex">T \to \infty</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord">∞</span></span></span></span> (e.g. <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>=</mo><mn>5.0</mn></mrow><annotation encoding="application/x-tex">T = 5.0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">5.0</span></span></span></span>): Differences between logits compress toward zero (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>14.2</mn><mi mathvariant="normal">/</mi><mn>5</mn><mo>≈</mo><mn>2.84</mn><mo separator="true">,</mo><mn>12.8</mn><mi mathvariant="normal">/</mi><mn>5</mn><mo>≈</mo><mn>2.56</mn></mrow><annotation encoding="application/x-tex">14.2 / 5 \approx 2.84, 12.8 / 5 \approx 2.56</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">14.2/5</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">2.84</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">12.8/5</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">2.56</span></span></span></span>), flattening the probabilities toward a uniform random draw.</li>
 </ul>
 
-<pre class="code-block"><code>Logits: [ "code": 10.0,  "script": 8.0,  "banana": 2.0 ]
-
-<p>T = 0.2 (Cold):  ──► [ "code": 99.9%, "script": 0.1%,  "banana": 0.0% ]  (Precise, deterministic)</p>
-<p>T = 1.0 (Normal):──► [ "code": 87.8%, "script": 11.9%, "banana": 0.3% ]  (Balanced)</p>
-<p>T = 3.0 (Hot):   ──► [ "code": 54.0%, "script": 32.0%, "banana": 14.0% ] (High creativity / chaos)</p>
-<p></code></pre></p>
+<p>![Figure 6.2: Temperature Entropy Calibration](assets/diagram_6_sampling.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 
@@ -2586,16 +2292,7 @@ hr {
 <li>If the model is <strong>uncertain</strong> (e.g., <code>"The dog was [happy, playful, barking, sleeping]"</code>), the probability is spread evenly, and the nucleus pool automatically expands to <strong>20+ tokens</strong>.</li>
 </ul>
 
-<pre class="code-block"><code>Tokens sorted by probability:
-<p>["Paris": 0.88, "Lyon": 0.05, "Marseille": 0.03, "banana": 0.001, ...]</p>
-
-<p>Target: Top-p = 0.90</p>
-<p class="num-item"><strong>1.</strong> Accumulate:</p>
-<p>"Paris" (0.88) ──► Sum = 0.88 (&lt; 0.90)</p>
-<p>"Lyon"  (0.05) ──► Sum = 0.93 (&gt;= 0.90! STOP!)</p>
-<p class="num-item"><strong>2.</strong> Discard everything else! ("Marseille", "banana", etc. cut off!)</p>
-<p class="num-item"><strong>3.</strong> Re-normalize ["Paris", "Lyon"] to sum to 1.0!</p>
-<p></code></pre></p>
+<p>![Figure 6.3: Nucleus Top-p Probability Mass Cutoff](assets/diagram_6_sampling.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 
@@ -2772,17 +2469,7 @@ hr {
 
 <p>The model simply calculates the log-probabilities of both the preferred answer <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>w</mi></msub></mrow><annotation encoding="application/x-tex">y_w</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0269em;">w</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> and the dispreferred answer <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>l</mi></msub></mrow><annotation encoding="application/x-tex">y_l</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0197em;">l</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> under both the active model and the frozen reference model, and performs standard gradient descent!</p>
 
-<pre class="code-block"><code>Dataset: (Prompt x, Preferred y_w, Dispreferred y_l)
-<p>│</p>
-<p>▼</p>
-<p>Compute Log-Ratios: log( π_θ / π_ref ) for both y_w and y_l</p>
-<p>│</p>
-<p>▼</p>
-<p>Delta = Ratio(y_w) - Ratio(y_l)</p>
-<p>│</p>
-<p>▼</p>
-<p>Loss = -log( sigmoid( β * Delta ) )  &lt;── Simple binary cross-entropy!</p>
-<p></code></pre></p>
+<p>![Figure 7.3: Direct Preference Optimization (DPO) Loss Architecture](assets/diagram_7_3_dpo.jpg)</p>
 
 </div><div class="card math-card"><h4>📐 The Mathematics & Working</h4>
 
