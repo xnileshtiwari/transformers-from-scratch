@@ -9,7 +9,7 @@ const katexCssPath = path.join(baseDir, 'node_modules/katex/dist/katex.min.css')
 let md = fs.readFileSync(mdPath, 'utf8');
 const katexCss = fs.readFileSync(katexCssPath, 'utf8');
 
-// SVG Vector Icons for Badges (Crisp, resolution-independent, zero missing glyphs)
+// SVG Vector Icons for Badges
 const ICONS = {
   why: `<svg class="sec-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/></svg>`,
   def: `<svg class="sec-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
@@ -32,29 +32,34 @@ md = md.replace(/`[^`\n]+`/g, (match) => {
   return `%%INLINECODE_${inlineCodes.length - 1}%%`;
 });
 
-// 2. Global Multi-line Display Math: $$ ... $$
+// 2. Protect and Pre-render Display Math: $$ ... $$
+const displayMathBlocks = [];
 md = md.replace(/\$\$([\s\S]*?)\$\$/g, (match, math) => {
   try {
     const rendered = katex.renderToString(math.trim(), {
       displayMode: true,
       throwOnError: false
     });
-    return `\n\n<div class="math-display-wrapper">${rendered}</div>\n\n`;
+    displayMathBlocks.push(`<div class="math-display-wrapper">${rendered}</div>`);
   } catch (err) {
-    return match;
+    displayMathBlocks.push(`<div class="math-display-wrapper">${match}</div>`);
   }
+  return `%%DISPLAYMATH_${displayMathBlocks.length - 1}%%`;
 });
 
-// 3. Global Inline Math: $ ... $
+// 3. Protect and Pre-render Inline Math: $ ... $
+const inlineMathBlocks = [];
 md = md.replace(/\$([^\$\n]+?)\$/g, (match, math) => {
   try {
-    return katex.renderToString(math.trim(), {
+    const rendered = katex.renderToString(math.trim(), {
       displayMode: false,
       throwOnError: false
     });
+    inlineMathBlocks.push(rendered);
   } catch (err) {
-    return match;
+    inlineMathBlocks.push(match);
   }
+  return `%%INLINEMATH_${inlineMathBlocks.length - 1}%%`;
 });
 
 // 4. Parse Markdown Images: ![caption](url) -> HTML <figure>
@@ -65,28 +70,7 @@ md = md.replace(/!\[(.*?)\]\((.*?)\)/g, (match, caption, src) => {
 </div>\n\n`;
 });
 
-// 5. Restore Code Blocks
-md = md.replace(/%%INLINECODE_(\d+)%%/g, (match, idx) => {
-  const code = inlineCodes[parseInt(idx)].slice(1, -1);
-  return `<code>${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
-});
-
-md = md.replace(/%%CODEBLOCK_(\d+)%%/g, (match, idx) => {
-  const rawBlock = codeBlocks[parseInt(idx)];
-  const firstLineEnd = rawBlock.indexOf('\n');
-  const lang = rawBlock.slice(3, firstLineEnd).trim();
-  const content = rawBlock.slice(firstLineEnd + 1, -3);
-
-  if (lang === 'mermaid') {
-    return `<div class="mermaid">${content}</div>`;
-  } else if (lang === 'xml' || lang === 'svg') {
-    return `<div class="svg-container">${content}</div>`;
-  } else {
-    return `<pre class="code-block"><code>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
-  }
-});
-
-// 6. Line-by-line Structure & Professional Section Badges
+// 5. Line-by-line Structure & Professional Section Badges
 const lines = md.split('\n');
 const htmlLines = [];
 let inList = false;
@@ -134,7 +118,7 @@ for (let i = 0; i < lines.length; i++) {
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>');
     htmlLines.push(`<p class="num-item"><strong>${num}</strong> ${text}</p>`);
-  } else if (line.trim().startsWith('<div') || line.trim().startsWith('<pre') || line.trim() === '') {
+  } else if (line.trim().startsWith('<div') || line.trim().startsWith('<pre') || line.trim().startsWith('%%DISPLAYMATH_') || line.trim() === '') {
     if (inList) { htmlLines.push('</ul>'); inList = false; }
     htmlLines.push(line);
   } else {
@@ -148,6 +132,35 @@ for (let i = 0; i < lines.length; i++) {
 
 if (inList) htmlLines.push('</ul>');
 let bodyHtml = htmlLines.join('\n');
+
+// 6. Restore Math & Code Blocks
+bodyHtml = bodyHtml.replace(/%%DISPLAYMATH_(\d+)%%/g, (match, idx) => {
+  return displayMathBlocks[parseInt(idx)];
+});
+
+bodyHtml = bodyHtml.replace(/%%INLINEMATH_(\d+)%%/g, (match, idx) => {
+  return inlineMathBlocks[parseInt(idx)];
+});
+
+bodyHtml = bodyHtml.replace(/%%INLINECODE_(\d+)%%/g, (match, idx) => {
+  const code = inlineCodes[parseInt(idx)].slice(1, -1);
+  return `<code>${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
+});
+
+bodyHtml = bodyHtml.replace(/%%CODEBLOCK_(\d+)%%/g, (match, idx) => {
+  const rawBlock = codeBlocks[parseInt(idx)];
+  const firstLineEnd = rawBlock.indexOf('\n');
+  const lang = rawBlock.slice(3, firstLineEnd).trim();
+  const content = rawBlock.slice(firstLineEnd + 1, -3);
+
+  if (lang === 'mermaid') {
+    return `<div class="mermaid">${content}</div>`;
+  } else if (lang === 'xml' || lang === 'svg') {
+    return `<div class="svg-container">${content}</div>`;
+  } else {
+    return `<pre class="code-block"><code>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
+  }
+});
 
 const finalHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -266,7 +279,17 @@ h3 {
 .math-display-wrapper {
   margin: 14px 0;
   text-align: center;
-  overflow-x: auto;
+  overflow: visible !important;
+  max-width: 100%;
+}
+
+.katex-display {
+  overflow: visible !important;
+  margin: 0.6em 0 !important;
+}
+
+.katex {
+  font-size: 1.05em;
 }
 
 .figure-container {
@@ -300,7 +323,7 @@ h3 {
   padding: 10px 12px;
   font-family: 'Courier New', monospace;
   font-size: 0.85em;
-  overflow-x: auto;
+  overflow: visible;
   page-break-inside: avoid;
 }
 
@@ -333,14 +356,4 @@ ${bodyHtml}
 
 const outHtmlPath = path.join(baseDir, 'index.html');
 fs.writeFileSync(outHtmlPath, finalHtml, 'utf8');
-console.log('index.html updated successfully!');
-
-// Verification of Images and Badges
-const totalImgs = (finalHtml.match(/<img[^>]+>/g) || []).length;
-const totalUnparsedMd = (finalHtml.match(/!\[.*?\]\(.*?\)/g) || []).length;
-const totalRawEmojiHeaders = (finalHtml.match(/####\s*[💡📖📐🌍]/g) || []).length;
-
-console.log(`VERIFICATION REPORT:`);
-console.log(`- Total <img> elements rendered: ${totalImgs}`);
-console.log(`- Unparsed markdown images: ${totalUnparsedMd}`);
-console.log(`- Unrendered emoji headers remaining: ${totalRawEmojiHeaders}`);
+console.log('update_compiler.js successfully executed!');

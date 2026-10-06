@@ -193,11 +193,23 @@ In contrast, the Transformer processes all $N$ tokens in parallel via matrix mul
 $$\text{Attn}(X) = \text{softmax}\left( \frac{(X W_Q)(X W_K)^\top}{\sqrt{d_k}} \right) (X W_V)$$
 
 Let $\mathbf{P} \in \{0, 1\}^{N \times N}$ be an arbitrary permutation matrix, defined such that $\mathbf{P} \mathbf{P}^\top = \mathbf{I}$ and $\mathbf{P} \mathbf{1} = \mathbf{1}$. When the input sequence is permuted such that $\widetilde{X} = \mathbf{P} X$, the queries, keys, and values undergo an identical row permutation:
-$$\widetilde{Q} = \mathbf{P} X W_Q = \mathbf{P} Q, \quad \widetilde{K} = \mathbf{P} X W_K = \mathbf{P} K, \quad \widetilde{V} = \mathbf{P} X W_V = \mathbf{P} V$$
+$$\begin{aligned}
+\widetilde{Q} &= \mathbf{P} X W_Q = \mathbf{P} Q, \\
+\widetilde{K} &= \mathbf{P} X W_K = \mathbf{P} K, \\
+\widetilde{V} &= \mathbf{P} X W_V = \mathbf{P} V
+\end{aligned}$$
 Computing the attention weights yields:
-$$\widetilde{A} = \text{softmax}\left( \frac{\mathbf{P} Q (\mathbf{P} K)^\top}{\sqrt{d_k}} \right) = \text{softmax}\left( \frac{\mathbf{P} Q K^\top \mathbf{P}^\top}{\sqrt{d_k}} \right) = \mathbf{P} \text{softmax}\left( \frac{Q K^\top}{\sqrt{d_k}} \right) \mathbf{P}^\top = \mathbf{P} A \mathbf{P}^\top$$
+$$\begin{aligned}
+\widetilde{A} &= \text{softmax}\left( \frac{\mathbf{P} Q (\mathbf{P} K)^\top}{\sqrt{d_k}} \right) \\
+&= \text{softmax}\left( \frac{\mathbf{P} Q K^\top \mathbf{P}^\top}{\sqrt{d_k}} \right) \\
+&= \mathbf{P} \text{softmax}\left( \frac{Q K^\top}{\sqrt{d_k}} \right) \mathbf{P}^\top = \mathbf{P} A \mathbf{P}^\top
+\end{aligned}$$
 Multiplying by the values:
-$$\text{Attn}(\widetilde{X}) = \widetilde{A} \widetilde{V} = (\mathbf{P} A \mathbf{P}^\top)(\mathbf{P} V) = \mathbf{P} A (\mathbf{P}^\top \mathbf{P}) V = \mathbf{P} (A V) = \mathbf{P} \text{Attn}(X)$$
+$$\begin{aligned}
+\text{Attn}(\widetilde{X}) &= \widetilde{A} \widetilde{V} = (\mathbf{P} A \mathbf{P}^\top)(\mathbf{P} V) \\
+&= \mathbf{P} A (\mathbf{P}^\top \mathbf{P}) V \\
+&= \mathbf{P} (A V) = \mathbf{P} \text{Attn}(X)
+\end{aligned}$$
 
 This mathematical equality proves that self-attention is strictly **permutation equivariant**: permuting the input sequence merely permutes the corresponding rows of the output matrix without altering any interaction score. If the output rows are pooled or compared independently of row order, the operation is **permutation invariant**. Without an injected positional signal, the network cannot distinguish where a word appears in time or space.
 
@@ -297,14 +309,21 @@ Sinusoidal encoding gives each word position a unique mathematical signature bui
 
 #### 📖 Definition & Architecture
 In absolute additive encoding, adding $\mathbf{p}_m$ and $\mathbf{p}_n$ to the input vectors expands the query-key dot product into four entangled terms:
-$$\mathbf{q}_m^\top \mathbf{k}_n = (\mathbf{x}_m + \mathbf{p}_m) W_Q W_K^\top (\mathbf{x}_n + \mathbf{p}_n)^\top = \mathbf{x}_m W_Q W_K^\top \mathbf{x}_n^\top + \mathbf{x}_m W_Q W_K^\top \mathbf{p}_n^\top + \mathbf{p}_m W_Q W_K^\top \mathbf{x}_n^\top + \mathbf{p}_m W_Q W_K^\top \mathbf{p}_n^\top$$
+$$\begin{aligned}
+\mathbf{q}_m^\top \mathbf{k}_n &= (\mathbf{x}_m + \mathbf{p}_m) W_Q W_K^\top (\mathbf{x}_n + \mathbf{p}_n)^\top \\
+&= \mathbf{x}_m W_Q W_K^\top \mathbf{x}_n^\top + \mathbf{x}_m W_Q W_K^\top \mathbf{p}_n^\top \\
+&\quad + \mathbf{p}_m W_Q W_K^\top \mathbf{x}_n^\top + \mathbf{p}_m W_Q W_K^\top \mathbf{p}_n^\top
+\end{aligned}$$
 This entangles semantic content with positional coordinates, forcing the network to waste capacity disentangling cross-terms.
 
 Su et al. (2021) formulated **RoFormer** by seeking an operation that injects positional coordinates into Query $\mathbf{q}_m$ and Key $\mathbf{k}_n$ such that their inner product depends *exclusively* on the relative displacement $m - n$:
 $$\langle f_q(\mathbf{x}_m, m), f_k(\mathbf{x}_n, n) \rangle = g(\mathbf{x}_m, \mathbf{x}_n, m - n)$$
 
 By framing the problem over the 2D plane and leveraging complex numbers, Euler's formula provides a natural solution. Let a 2D vector $\mathbf{x} = [x_1, x_2]^\top$ be represented as a complex number $z = x_1 + i x_2$. Rotating $z$ by an angle proportional to position $m$ is equivalent to multiplying by $e^{i m \theta}$:
-$$R_{\theta, m} z = (x_1 + i x_2) e^{i m \theta} = (x_1 \cos(m\theta) - x_2 \sin(m\theta)) + i (x_1 \sin(m\theta) + x_2 \cos(m\theta))$$
+$$\begin{aligned}
+R_{\theta, m} z &= (x_1 + i x_2) e^{i m \theta} \\
+&= (x_1 \cos(m\theta) - x_2 \sin(m\theta)) + i (x_1 \sin(m\theta) + x_2 \cos(m\theta))
+\end{aligned}$$
 In real matrix form, this corresponds to the $2 \times 2$ orthogonal rotation matrix:
 $$R_{\theta, m} = \begin{bmatrix} \cos(m\theta) & -\sin(m\theta) \\ \sin(m\theta) & \cos(m\theta) \end{bmatrix}$$
 
@@ -312,7 +331,10 @@ For a $d$-dimensional space (where $d$ is the head dimension $d_k$), the vector 
 $$\mathbf{R}_{\Theta, m}^d = \text{diag}\left( R_{\theta_1, m}, R_{\theta_2, m}, \dots, R_{\theta_{d/2}, m} \right)$$
 
 When computing the self-attention score between query at position $m$ and key at position $n$:
-$$\langle \mathbf{R}_{\Theta, m}^d \mathbf{q}_m, \mathbf{R}_{\Theta, n}^d \mathbf{k}_n \rangle = (\mathbf{R}_{\Theta, m}^d \mathbf{q}_m)^\top (\mathbf{R}_{\Theta, n}^d \mathbf{k}_n) = \mathbf{q}_m^\top (\mathbf{R}_{\Theta, m}^d)^\top \mathbf{R}_{\Theta, n}^d \mathbf{k}_n$$
+$$\begin{aligned}
+\langle \mathbf{R}_{\Theta, m}^d \mathbf{q}_m, \mathbf{R}_{\Theta, n}^d \mathbf{k}_n \rangle &= (\mathbf{R}_{\Theta, m}^d \mathbf{q}_m)^\top (\mathbf{R}_{\Theta, n}^d \mathbf{k}_n) \\
+&= \mathbf{q}_m^\top (\mathbf{R}_{\Theta, m}^d)^\top \mathbf{R}_{\Theta, n}^d \mathbf{k}_n
+\end{aligned}$$
 Because rotation matrices form an abelian group under addition, $(\mathbf{R}_{\Theta, m}^d)^\top = \mathbf{R}_{\Theta, -m}^d$, which gives:
 $$(\mathbf{R}_{\Theta, m}^d)^\top \mathbf{R}_{\Theta, n}^d = \mathbf{R}_{\Theta, -m}^d \mathbf{R}_{\Theta, n}^d = \mathbf{R}_{\Theta, n - m}^d$$
 Thus:
@@ -842,7 +864,10 @@ $$M_{i,j} = \begin{cases} 0 & \text{if } j \le i \\ -\infty & \text{if } j > i \
 
 Computing the probability mass for $j > i$:
 
-$$A_{i,j} = \frac{\exp(s_{i,j} + (-\infty))}{\sum_{l \le i} \exp(s_{i,l}) + \sum_{l > i} \exp(-\infty)} = \frac{0}{\sum_{l \le i} \exp(s_{i,l}) + 0} = 0$$
+$$\begin{aligned}
+A_{i,j} &= \frac{\exp(s_{i,j} + (-\infty))}{\sum_{l \le i} \exp(s_{i,l}) + \sum_{l > i} \exp(-\infty)} \\
+&= \frac{0}{\sum_{l \le i} \exp(s_{i,l}) + 0} = 0
+\end{aligned}$$
 
 - $A_{\text{causal}} \in \mathbb{R}^{N \times N}$: Strictly lower-triangular attention probability matrix.
 - $Q, K \in \mathbb{R}^{N \times d_k}$: Sequence query and key matrices.
@@ -932,7 +957,10 @@ Introduced in ResNet (He et al., 2016) and adopted universally in Transformers (
 $$\mathbf{x}_{\text{out}} = \mathbf{x}_{\text{in}} + \text{Sublayer}(\mathbf{x}_{\text{in}})$$
 
 During backpropagation, the gradient of the loss $\mathcal{L}$ with respect to the input is:
-$$\frac{\partial \mathcal{L}}{\partial \mathbf{x}_{\text{in}}} = \frac{\partial \mathcal{L}}{\partial \mathbf{x}_{\text{out}}} \cdot \left( \mathbf{I} + \frac{\partial \text{Sublayer}(\mathbf{x}_{\text{in}})}{\partial \mathbf{x}_{\text{in}}} \right) = \frac{\partial \mathcal{L}}{\partial \mathbf{x}_{\text{out}}} + \frac{\partial \mathcal{L}}{\partial \mathbf{x}_{\text{out}}} \frac{\partial \text{Sublayer}}{\partial \mathbf{x}_{\text{in}}}$$
+$$\begin{aligned}
+\frac{\partial \mathcal{L}}{\partial \mathbf{x}_{\text{in}}} &= \frac{\partial \mathcal{L}}{\partial \mathbf{x}_{\text{out}}} \cdot \left( \mathbf{I} + \frac{\partial \text{Sublayer}(\mathbf{x}_{\text{in}})}{\partial \mathbf{x}_{\text{in}}} \right) \\
+&= \frac{\partial \mathcal{L}}{\partial \mathbf{x}_{\text{out}}} + \frac{\partial \mathcal{L}}{\partial \mathbf{x}_{\text{out}}} \frac{\partial \text{Sublayer}}{\partial \mathbf{x}_{\text{in}}}
+\end{aligned}$$
 
 Notice the identity term $\mathbf{I}$: even if the sublayer's gradient completely vanishes ($\frac{\partial \text{Sublayer}}{\partial \mathbf{x}_{\text{in}}} \approx 0$), the error gradient flows backwards completely unimpeded through the $+1$ identity path!
 
@@ -966,7 +994,10 @@ $$\text{LN}(\mathbf{x}) = \frac{\mathbf{x} - \mu}{\sqrt{\sigma^2 + \epsilon}} \o
 Where $\mu = \frac{1}{d} \sum x_i$ and $\sigma^2 = \frac{1}{d} \sum (x_i - \mu)^2$.
 
 Modern frontier models (LLaMA, Mistral, Gemma, Qwen) replace LayerNorm with **RMSNorm** (Zhang & Sennrich, 2019). RMSNorm demonstrates that shifting activations by the mean $\mu$ contributes nothing to training stability; only scaling by the root-mean-square matters:
-$$\text{RMSNorm}(\mathbf{x}) = \frac{\mathbf{x}}{\text{RMS}(\mathbf{x})} \odot \gamma, \quad \text{where } \text{RMS}(\mathbf{x}) = \sqrt{\frac{1}{d} \sum_{i=1}^d x_i^2 + \epsilon}$$
+$$\begin{aligned}
+\text{RMSNorm}(\mathbf{x}) &= \frac{\mathbf{x}}{\text{RMS}(\mathbf{x})} \odot \gamma, \\
+\text{where } \text{RMS}(\mathbf{x}) &= \sqrt{\frac{1}{d} \sum_{i=1}^d x_i^2 + \epsilon}
+\end{aligned}$$
 By dropping mean calculation and the bias term $\beta$, RMSNorm reduces GPU memory reads/writes by ~10–50% per normalization layer with zero loss in training quality.
 
 ![Figure 4.2: Layer Normalization vs RMSNorm Architecture](assets/diagram_4_2_rmsnorm.jpg)
@@ -1313,7 +1344,10 @@ Rafailov et al. (2023) showed that the implicit reward $r(x, y)$ of any policy $
 $$r(x, y) = \beta \log \frac{\pi_\theta(y \mid x)}{\pi_{\text{ref}}(y \mid x)}$$
 
 Substituting this implicit reward directly into the Bradley-Terry preference loss yields the **DPO Objective**:
-$$\mathcal{L}_{\text{DPO}}(\theta) = -\mathbb{E}_{(x, y_w, y_l)} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w \mid x)}{\pi_{\text{ref}}(y_w \mid x)} - \beta \log \frac{\pi_\theta(y_l \mid x)}{\pi_{\text{ref}}(y_l \mid x)} \right) \right]$$
+$$\begin{aligned}
+\mathcal{L}_{\text{DPO}}(\theta) &= -\mathbb{E}_{(x, y_w, y_l)} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w \mid x)}{\pi_{\text{ref}}(y_w \mid x)} \right.\right. \\
+&\quad\quad \left.\left. - \beta \log \frac{\pi_\theta(y_l \mid x)}{\pi_{\text{ref}}(y_l \mid x)} \right) \right]
+\end{aligned}$$
 
 The model simply calculates the log-probabilities of both the preferred answer $y_w$ and the dispreferred answer $y_l$ under both the active model and the frozen reference model, and performs standard gradient descent!
 
@@ -1371,7 +1405,10 @@ In DeepSeek-R1's GRPO framework:
 ```
 
 #### 📐 The Mathematics & Working
-$$\mathcal{L}_{\text{GRPO}}(\theta) = -\frac{1}{G} \sum_{i=1}^G \left[ \min\left( \frac{\pi_\theta(o_i \mid q)}{\pi_{\text{old}}(o_i \mid q)} A_i, \, \text{clip}\left(\frac{\pi_\theta(o_i \mid q)}{\pi_{\text{old}}(o_i \mid q)}, 1-\epsilon, 1+\epsilon\right) A_i \right) - \beta \, \mathbb{D}_{\text{KL}}(\pi_\theta \,\|\, \pi_{\text{ref}}) \right]$$
+$$\begin{aligned}
+\mathcal{L}_{\text{GRPO}}(\theta) &= -\frac{1}{G} \sum_{i=1}^G \left[ \min\left( \frac{\pi_\theta(o_i \mid q)}{\pi_{\text{old}}(o_i \mid q)} A_i, \, \text{clip}\left(\frac{\pi_\theta(o_i \mid q)}{\pi_{\text{old}}(o_i \mid q)}, 1-\epsilon, 1+\epsilon\right) A_i \right) \right. \\
+&\quad\quad \left. - \beta \, \mathbb{D}_{\text{KL}}(\pi_\theta \,\|\, \pi_{\text{ref}}) \right]
+\end{aligned}$$
 * $G$: Number of parallel reasoning rollouts sampled per question.
 * $A_i$: Normalized advantage score computed relative to the peer group.
 * $\text{clip}(\dots)$: PPO-style clipping preventing destructive policy updates.
