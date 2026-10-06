@@ -1,6 +1,6 @@
 # Transformers: The Atomic Dissection
 *An Irreducible, First-Principles Guide to LLM Architecture & Post-Training*
-**Author:** Mike (for Nilesh)
+**Written by Nilesh & Mike (Nilesh's personal AI assistant)**
 
 ---
 
