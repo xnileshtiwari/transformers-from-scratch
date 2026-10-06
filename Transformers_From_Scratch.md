@@ -4,69 +4,85 @@
 
 ---
 
-## 🗺️ Complete Architecture Dependency Graph
-
-```mermaid
-graph TD
-    subgraph S0 [Module 0: The Bridge from Word2Vec]
-        M0_1[0.1 Polysemy & Word2Vec Collapse] --> M0_2[0.2 Token Embedding Matrix]
-    end
-
-    subgraph S1 [Module 1: Spatial & Order Foundations]
-        M1_1[1.1 Permutation Invariance] --> M1_2[1.2 Absolute Sinusoidal PE]
-        M1_1 --> M1_3[1.3 Rotary Position Embedding RoPE]
-    end
-
-    M0_2 --> STREAM[The Residual Stream: Baseline Vector Space]
-    M1_2 -.-> STREAM
-    M1_3 -.-> M2_1
-
-    subgraph S2 [Module 2: Self-Attention Atomic Engine]
-        STREAM --> M2_1[2.1 Linear Projections: Q, K, V]
-        M2_1 --> M2_2[2.2 Dot-Product Compatibility: Q x K^T]
-        M2_2 --> M2_3[2.3 Variance Scaling: 1 / sqrt dk]
-        M2_3 --> M2_4[2.4 Softmax Probability Normalization]
-        M2_4 --> M2_5[2.5 Value Aggregation: Softmax x V]
-    end
-
-    subgraph S3 [Module 3: Multi-Head & Causal Decoding]
-        M2_5 --> M3_1[3.1 Multi-Head Subspace Splitting]
-        M3_1 --> M3_2[3.2 Output Projection Matrix: W_O]
-        M2_3 --> M3_3[3.3 Causal Attention Masking]
-        M3_3 --> M2_4
-        M2_1 --> M3_4[3.4 KV-Cache Dynamic Memory]
-    end
-
-    subgraph S4 [Module 4: Signal Integrity & Normalization]
-        STREAM --> M4_1[4.1 Residual Skip Connections]
-        M3_2 --> M4_1
-        M4_1 --> M4_2[4.2 LayerNorm vs RMSNorm]
-        M4_2 --> M4_3[4.3 Pre-LN Architecture]
-    end
-
-    subgraph S5 [Module 5: Factual Memory & Computation FFN]
-        M4_3 --> M5_1[5.1 Two-Layer Expansion FFN]
-        M5_1 --> M5_2[5.2 Gated Activations: SwiGLU]
-    end
-
-    M5_2 --> RES2[Post-FFN Residual Accumulator]
-
-    subgraph S6 [Module 6: Vocabulary Projection & Sampling]
-        RES2 --> M6_1[6.1 Unembedding Head: W_U Logits]
-        M6_1 --> M6_2[6.2 Temperature Scaling]
-        M6_2 --> M6_3[6.3 Nucleus & Top-k Sampling]
-    end
-
-    subgraph S7 [Module 7: Post-Training, Alignment & Reasoning RL]
-        M6_3 --> M7_1[7.1 Supervised Fine-Tuning SFT]
-        M7_1 --> M7_2[7.2 Reward Modeling & RLHF PPO]
-        M7_1 --> M7_3[7.3 Direct Preference Optimization DPO]
-        M7_1 --> M7_4[7.4 Reasoning RL & Verifiable Rewards GRPO]
-    end
-```
+# Chapter 0: The Master Architecture Blueprint
+*The Complete End-to-End Mental Model of Modern Transformers*
 
 ---
 
+### The Bird's-Eye View: How an LLM Actually Works
+
+Before we dive into the mathematical machinery of individual equations and matrices, you need a high-level mental map. 
+
+Modern artificial intelligence (from ChatGPT and Claude to Gemini and DeepSeek) can feel mysterious from the outside. But mechanically, every single modern Large Language Model is built on one unified architecture: **The Decoder-Only Transformer**.
+
+At its core, a Transformer is simply an **information assembly line**. Think of it like an ultra-fast conveyor belt running through an automated factory:
+1. **Raw Words** arrive at the factory entrance.
+2. They are stamped into **Lists of Numbers (Vectors)**.
+3. They are loaded onto a moving conveyor belt called the **Residual Stream**.
+4. As they travel along the belt, multiple worker stations read from them, compare them with neighboring words, and write new factual insights back onto the belt.
+5. At the factory exit, the final numbers are translated back into ordinary words, one token at a time.
+
+Below is the complete architectural map showing every single station your words travel through.
+
+![Figure 0.0: The Complete End-to-End Transformer Architecture Blueprint](assets/diagram_architecture_map.jpg)
+
+---
+
+### The 8 Stations of the Transformer Pipeline
+
+Every subsequent module in this book focuses on exactly one station of this factory floor. Here is how they connect together:
+
+#### 🚉 Station 0: Discrete Words to Continuous Vectors (The Embedding Table)
+* **What it does:** Computers cannot understand letters or words; they can only calculate with numbers. Station 0 takes raw words (like `"bank"` or `"apple"`) and looks up their starting coordinates in a massive vocabulary lookup table called the **Embedding Matrix** ($W_E$).
+* **Why it matters:** Older models (like Word2Vec) assigned one rigid coordinate to each word, which meant the financial word "bank" and the river "bank" got mashed together into a useless average. Station 0 gives every word a flexible launching pad so later layers can bend its meaning to fit the sentence.
+
+#### 🚉 Station 1: Injecting Spatial Coordinates (RoPE & Sinusoids)
+* **What it does:** The core Transformer engine is naturally blind to word order. To the raw math, *"dog bites man"* looks identical to *"man bites dog"*. Station 1 gives every word a spatial clock.
+* **Why it matters:** In modern models, we use **Rotary Position Embeddings (RoPE)**. Instead of simply adding position numbers, RoPE mathematically rotates the word vectors in 2D pairs like the hands of a clock. As a result, how two words interact depends purely on their relative distance from each other.
+
+#### 🚉 Station 2: The Self-Attention Engine (Queries, Keys & Values)
+* **What it does:** This is the communication hub of the entire model. Every word emits three specialized vectors:
+  * **Query ($Q$):** What this word is searching for (*"I am a pronoun; who is my owner?"*).
+  * **Key ($K$):** What this word contains (*"I am a person; my name is Alice"*).
+  * **Value ($V$):** The actual substantive information to pass along.
+* **Why it matters:** By computing the dot product between Queries and Keys, the model measures how relevant every word is to every other word. It scales the numbers by $1/\sqrt{d_k}$ (to keep the math stable) and passes them through **Softmax** to convert them into percentages that sum to 100%. Finally, it takes a weighted mixture of the Values.
+
+#### 🚉 Station 3: Multi-Head Subspaces, Causal Masking & Fast KV-Cache
+* **What it does:** Language is too complex for a single perspective. Station 3 splits the attention process into multiple parallel **Attention Heads** (e.g., 32 or 64 heads). One head tracks grammar, another tracks pronoun owners, and another tracks dates.
+* **Why it matters:** It also enforces **Causal Masking**—preventing words from "cheating" by peeking at future tokens during generation. During chat generation, it activates the **KV-Cache**, storing past keys and values in GPU memory so the model only calculates the newest token ($O(1)$ inference time instead of re-reading the entire book every second).
+
+#### 🚉 Station 4: The Residual Stream Highway & RMSNorm
+* **What it does:** Modern models are deep—often stacking 80 to 128 transformer layers on top of each other. If numbers were multiplied through 100 layers in a row, they would either shrink to zero (vanishing gradients) or blow up to infinity (exploding gradients).
+* **Why it matters:** The **Residual Stream** is an uninterrupted highway running through the entire network. Instead of overwriting the token vector, each layer merely *adds* its small update to the stream ($x_{	ext{next}} = x + 	ext{Update}$). To prevent numbers from growing unchecked, **RMSNorm** rescales the vector variance before each operation.
+
+#### 🚉 Station 5: Factual Memory & Nonlinear Computation (The SwiGLU MLP)
+* **What it does:** While Attention allows tokens to talk to *each other*, the **Feed-Forward Network (FFN)** allows tokens to consult the model's internal encyclopedic memory.
+* **Why it matters:** The FFN expands the vector's size (usually by a factor of $8/3 	imes d$), applies a multiplicative gate (**SwiGLU**), and compresses it back down. This is where factual knowledge (e.g., *"Paris is the capital of France"*, Python syntax rules, mathematical formulas) is permanently stored.
+
+#### 🚉 Station 6: Unembedding Head, Logits & Dynamic Sampling
+* **What it does:** At the end of 100+ layers, our token vector on the conveyor belt has been enriched with context, grammar, and facts. But it is still just a list of numbers! Station 6 projects this vector back across all 128,000 words in the vocabulary using the **Unembedding Matrix** ($W_U$), producing raw scores called **Logits**.
+* **Why it matters:** These scores are converted into probabilities using **Temperature** (controlling creativity/randomness), **Top-k** (keeping only the top $k$ candidates), and **Nucleus Top-p** (sampling from the smallest set of words whose total probability exceeds $p$).
+
+#### 🚉 Station 7: Post-Training, Alignment & Reasoning RL
+* **What it does:** The raw pre-trained model is simply a brilliant auto-complete engine—if you ask it *"What is the capital of France?"*, it might reply with *"What is the capital of Spain?"* because it saw an exam sheet online.
+* **Why it matters:** Station 7 transforms the raw predictor into a helpful, truthful, reasoning assistant. We explore **Supervised Fine-Tuning (SFT)**, **Direct Preference Optimization (DPO)**, and modern **Reasoning RL (GRPO)** as used in frontier reasoning models like DeepSeek-R1 and OpenAI o1.
+
+---
+
+### The End-to-End Pipeline Summary Table
+
+| Stage | Name | Input $	o$ Output | What Breaks If We Omit It? |
+|---|---|---|---|
+| **00** | **Embeddings** | Token ID $	o$ Vector $\mathbb{R}^d$ | Words remain text strings; math cannot operate on them. |
+| **01** | **Position (RoPE)** | Vector $	o$ Vector with Rotated Coordinates | Model becomes an unordered bag of words ("dog bites man" = "man bites dog"). |
+| **02** | **Self-Attention** | Context Vectors $	o$ Contextualized Mix | Words cannot communicate; word meanings stay isolated and naive. |
+| **03** | **Multi-Head & KV-Cache** | Multiple Heads $	o$ Fused Subspaces | Model can only track one semantic relationship at a time; inference slows to a crawl. |
+| **04** | **Residuals & RMSNorm** | Stream Vector $	o$ Stabilized Stream | Deep networks (30+ layers) collapse during training due to vanishing gradients. |
+| **05** | **FFN (SwiGLU)** | Vector $	o$ Factually Enriched Vector | Model has no internal memory store; cannot recall historical facts or code patterns. |
+| **06** | **Unembedding & Sampling** | Vector $	o$ Next-Token String | The vector cannot be translated back into human-readable text. |
+| **07** | **Alignment & Reasoning** | Raw Predictor $	o$ Reasoning AI | Model hallucinates, ignores user instructions, or completes prompts blindly. |
+
+---
 # Module 0: The Bridge from Word2Vec
 *From Static Semantic Dictionaries to Contextual State Spaces*
 

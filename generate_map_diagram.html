@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1400px;
+    height: 2200px;
+    background-color: #070d1a;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #ffffff;
+    padding: 60px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .grid-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 70%),
+      linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 60px 60px, 60px 60px;
+    z-index: 1;
+  }
+
+  .content {
+    position: relative;
+    z-index: 10;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    border-bottom: 2px solid rgba(56, 189, 248, 0.2);
+    padding-bottom: 30px;
+  }
+  .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #38bdf8;
+    margin-bottom: 8px;
+  }
+  .title {
+    font-size: 46px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+  }
+  .subtitle {
+    font-size: 20px;
+    color: #94a3b8;
+    margin-top: 6px;
+  }
+
+  /* Pipeline Stages Container */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin: 20px 0;
+  }
+
+  .stage-row {
+    display: flex;
+    align-items: stretch;
+    background: rgba(15, 23, 42, 0.88);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .stage-id {
+    width: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    padding: 12px;
+  }
+  .stage-num {
+    font-size: 28px;
+  }
+  .stage-tag {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-top: 2px;
+  }
+
+  .stage-body {
+    flex: 1;
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .stage-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .stage-desc {
+    font-size: 16px;
+    color: #cbd5e1;
+    line-height: 1.4;
+    margin-top: 4px;
+  }
+  .stage-math {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #38bdf8;
+    margin-top: 6px;
+    font-weight: 600;
+  }
+
+  .stage-badge {
+    width: 230px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    padding: 16px 24px;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(3, 7, 18, 0.4);
+  }
+  .badge-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .badge-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-top: 2px;
+  }
+
+  /* Color Themes per Module */
+  .s0 { border-left: 6px solid #f59e0b; }
+  .s0 .stage-id { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+  
+  .s1 { border-left: 6px solid #06b6d4; }
+  .s1 .stage-id { background: rgba(6, 182, 212, 0.15); color: #22d3ee; }
+
+  .s2 { border-left: 6px solid #8b5cf6; }
+  .s2 .stage-id { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+
+  .s3 { border-left: 6px solid #ec4899; }
+  .s3 .stage-id { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+
+  .s4 { border-left: 6px solid #10b981; }
+  .s4 .stage-id { background: rgba(168, 85, 247, 0.15); color: #34d399; }
+
+  .s5 { border-left: 6px solid #3b82f6; }
+  .s5 .stage-id { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+
+  .s6 { border-left: 6px solid #f97316; }
+  .s6 .stage-id { background: rgba(249, 115, 22, 0.15); color: #fb923c; }
+
+  .s7 { border-left: 6px solid #a855f7; }
+  .s7 .stage-id { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+
+  /* Flow Arrow Indicator */
+  .flow-arrow {
+    text-align: center;
+    color: #38bdf8;
+    font-size: 16px;
+    margin: -10px 0;
+    opacity: 0.6;
+    position: relative;
+    z-index: 5;
+  }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
+    padding-top: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: #64748b;
+  }
+  .footer strong {
+    color: #e2e8f0;
+  }
+</style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="content">
+    
+    <div class="header">
+      <div class="kicker">Chapter 00 • Complete Architecture Blueprint</div>
+      <h1 class="title">End-to-End Transformer Pipeline</h1>
+      <p class="subtitle">From Raw Words to Scaled Attention, Residual Highways, and Reasoning Intelligence</p>
+    </div>
+
+    <div class="pipeline">
+      
+      <!-- Module 0 -->
+      <div class="stage-row s0">
+        <div class="stage-id">
+          <span class="stage-num">00</span>
+          <span class="stage-tag">Embedding</span>
+        </div>
+        <div class="stage-body">
+          <div class="stage-title">From Words to Vectors & Static Lookup</div>
+          <div class="stage-desc">Discrete text tokens are converted into continuous numerical coordinates via the Embedding Table (W<sub>E</sub>). Solves Word2Vec's polysemy collapse.</div>
+          <div class="stage-math">x<sub>i</sub> = Token<sub>i</sub> × W<sub>E</sub> ∈ ℝ<sup>d</sup></div>
+        </div>
+        <div class="stage-badge">
+          <span class="badge-label">Input → Output</span>
+          <span class="badge-val">Token ID → Vector ℝ<sup>d</sup></span>
+        </div>
+      </div>
+
+      <div class="flow-arrow">▼</div>
+
+      <!-- Module 1 -->
+      <div class="stage-row s1">
+        <div class="stage-id">
+          <span class="stage-num">01</span>
+          <span class="stage-tag">Position</span>
+        </div>
+        <div class="stage-body">
+          <div class="stage-title">Spatial Coordinates & Geometry (RoPE / Sinusoids)</div>
+          <div class="stage-desc">Injects word order into an otherwise unordered set. Uses 2D rotary rotations (RoPE) so token similarity depends directly on relative distance (m − n).</div>
+          <div class="stage-math">q<sub>m</sub> = R<sub>Θ,m</sub> (W<sub>Q</sub> x<sub>m</sub>)</div>
+        </div>
+        <div class="stage-badge">
+          <span class="badge-label">Geometry</span>
+          <span class="badge-val">Rotary Matrix R<sub>Θ</sub></span>
+        </div>
+      </div>
+
+      <div class="flow-arrow">▼</div>
+
+      <!-- Module 2 -->
+      <div class="stage-row s2">
+        <div class="stage-id">
+          <span class="stage-num">02</span>
+          <span class="stage-tag">Attention</span>
+        </div>
+        <div class="stage-body">
+          <div class="stage-title">Self-Attention Atomic Engine (Q, K, V & Softmax)</div>
+          <div class="stage-desc">The core routing mechanism. Tokens project Queries, Keys, and Values. Dot products measure compatibility, scaled by 1/√d<sub>k</sub> to prevent gradient vanishing.</div>
+          <div class="stage-math">Attention(Q, K, V) = Softmax(Q · K<sup>T</sup> / √d<sub>k</sub>) V</div>
+        </div>
+        <div class="stage-badge">
+          <span class="badge-label">Operation</span>
+          <span class="badge-val">Scaled Dot-Product</span>
+        </div>
+      </div>
+
+      <div class="flow-arrow">▼</div>
+
+      <!-- Module 3 -->
+      <div class="stage-row s3">
+        <div class="stage-id">
+          <span class="stage-num">03</span>
+          <span class="stage-tag">Multi-Head</span>
+        </div>
+        <div class="stage-body">
+          <div class="stage-title">Multi-Head Subspaces, Causal Masks & KV-Cache</div>
+          <div class="stage-desc">Splits the stream into h parallel heads (syntax, facts, logic). Applies lower-triangular causal masks for generation and caches past keys/values for O(1) inference.</div>
+          <div class="stage-math">MHA = Concat(head<sub>1</sub>, ..., head<sub>h</sub>) W<sub>O</sub></div>
+        </div>
+        <div class="stage-badge">
+          <span class="badge-label">Inference Speedup</span>
+          <span class="badge-val">KV-Cache O(1)</span>
+        </div>
+      </div>
+
+      <div class="flow-arrow">▼</div>
+
+      <!-- Module 4 -->
+      <div class="stage-row s4">
+        <div class="stage-id">
+          <span class="stage-num">04</span>
+          <span class="stage-tag">Residuals</span>
+        </div>
+        <div class="stage-body">
+          <div class="stage-title">Residual Stream Highway & RMSNorm Normalization</div>
+          <div class="stage-desc">The persistent conveyor belt of the network. Additive skip connections prevent vanishing gradients across 100+ layers. RMSNorm stabilizes signal variance.</div>
+          <div class="stage-math">x<sub>next</sub> = x + SubLayer(RMSNorm(x))</div>
+        </div>
+        <div class="stage-badge">
+          <span class="badge-label">Signal Stability</span>
+          <span class="badge-val">Pre-LN + RMSNorm</span>
+        </div>
+      </div>
+
+      <div class="flow-arrow">▼</div>
+
+      <!-- Module 5 -->
+      <div class="stage-row s5">
+        <div class="stage-id">
+          <span class="stage-num">05</span>
+          <span class="stage-tag">FFN / MLP</span>
+        </div>
+        <div class="stage-body">
+          <div class="stage-title">Factual Memory & Computation (SwiGLU Gating)</div>
+          <div class="stage-desc">Where world facts and reasoning rules are stored. Expands dimension by 8/3 × d and applies multiplicative SwiGLU gating to filter and synthesize information.</div>
+          <div class="stage-math">FFN(x) = (Swish(x W<sub>gate</sub>) ⊙ x W<sub>up</sub>) W<sub>down</sub></div>
+        </div>
+        <div class="stage-badge">
+          <span class="badge-label">Memory Store</span>
+          <span class="badge-val">SwiGLU 8/3d Expansion</span>
+        </div>
+      </div>
+
+      <div class="flow-arrow">▼</div>
+
+      <!-- Module 6 -->
+      <div class="stage-row s6">
+        <div class="stage-id">
+          <span class="stage-num">06</span>
+          <span class="stage-tag">Sampling</span>
+        </div>
+        <div class="stage-body">
+          <div class="stage-title">Unembedding Head, Logits & Dynamic Sampling</div>
+          <div class="stage-desc">Projects the final residual vector back to vocabulary space (V). Applies Temperature scaling, Top-k truncation, and Nucleus (Top-p) thresholding to pick the next word.</div>
+          <div class="stage-math">P(w<sub>i</sub>) = Softmax(z / T)<sub>i</sub></div>
+        </div>
+        <div class="stage-badge">
+          <span class="badge-label">Output</span>
+          <span class="badge-val">Top-p / Top-k Probabilities</span>
+        </div>
+      </div>
+
+      <div class="flow-arrow">▼</div>
+
+      <!-- Module 7 -->
+      <div class="stage-row s7">
+        <div class="stage-id">
+          <span class="stage-num">07</span>
+          <span class="stage-tag">Post-Training</span>
+        </div>
+        <div class="stage-body">
+          <div class="stage-title">Post-Training: SFT, RLHF, DPO & Reasoning RL (GRPO)</div>
+          <div class="stage-desc">Transforms a raw next-token predictor into an assistant. Covers Supervised Fine-Tuning (SFT), Direct Preference Optimization (DPO), and Group Relative Policy Optimization (GRPO).</div>
+          <div class="stage-math">ℒ<sub>DPO</sub> = −log σ(β log(π<sub>θ</sub> / π<sub>ref</sub>)<sub>w</sub> − β log(π<sub>θ</sub> / π<sub>ref</sub>)<sub>l</sub>)</div>
+        </div>
+        <div class="stage-badge">
+          <span class="badge-label">Alignment</span>
+          <span class="badge-val">DPO & GRPO (DeepSeek/o1)</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      <span>THE VIBE CODER’S GUIDE TO LLMs</span>
+      <span><strong>CHAPTER 0: MASTER BLUEPRINT</strong></span>
+      <span>300 DPI VECTOR INFOGRAPHIC</span>
+    </div>
+
+  </div>
+</body>
+</html>
